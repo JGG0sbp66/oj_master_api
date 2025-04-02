@@ -44,3 +44,7 @@ def login():
 
     # 调用服务层处理登录逻辑
     return login_user(username, password)
+
+@auth_bp.route('/test', methods=['GET'])
+def test():
+    return "hello"

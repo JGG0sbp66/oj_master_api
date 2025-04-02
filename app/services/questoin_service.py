@@ -5,7 +5,6 @@ import math
 
 
 def get_questions(page, category, topic, textinput):
-    a = 1
     limit = 15
     offset = (page - 1) * limit
 

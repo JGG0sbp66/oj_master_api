@@ -16,5 +16,4 @@ def question_list():
     category = data.get('category', '')
     topic = data.get('topic', '')
     textinput = data.get('input', '')
-    a = 1
     return get_questions(page, category, topic, textinput)

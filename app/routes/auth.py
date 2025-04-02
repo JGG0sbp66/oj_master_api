@@ -47,4 +47,4 @@ def login():
 
 @auth_bp.route('/test', methods=['GET'])
 def test():
-    return "hello"
+    return "hello1"

@@ -8,7 +8,7 @@ class User(db.Model):
 
 class Questions(db.Model):
     __tablename__ = 'questionslist'
-    u_id = db.Column(db.Integer, primary_key=True)
+    uid = db.Column(db.Integer, primary_key=True)
     state = db.Column(db.String(80), unique=True, nullable=False)
     title = db.Column(db.String(255), nullable=False)
     topic = db.Column(db.String(255), nullable=False)

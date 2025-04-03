@@ -30,7 +30,7 @@ def get_questions(page, category, topic, textinput):
     question_list = []
     for q in result:
         question_list.append({
-            "u_id": q.u_id,
+            "uid": q.uid,
             "state": q.state,
             "title": q.title,
             "topic": q.topic,

@@ -1,13 +1,34 @@
 from datetime import timedelta
 
 import bcrypt
+import requests
 from flask import jsonify, session
 
 from ..models import User
 from ..extensions import db
-from ..utils.validators import validate_credentials
+
 
 def register_user(username, password, cf_token):
+    # 验证 Cloudflare Turnstile
+    try:
+        response = requests.post(
+            "http://localhost:5000/api/verify-cf",
+            json={"cfToken": cf_token},
+            headers={"Content-Type": "application/json"}
+        )
+        result = response.json()
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'验证码服务异常: {str(e)}'
+        })
+
+    if not result.get('success'):
+        return jsonify({
+            'success': False,
+            'message': '验证码校验失败'
+        })
+
     # 检查用户名是否已存在
     if User.query.filter_by(username=username).first():
         return jsonify({

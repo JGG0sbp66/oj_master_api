@@ -1,0 +1,5 @@
+Flask~=3.1.0
+requests~=2.32.3
+bcrypt~=4.3.0
+SQLAlchemy~=2.0.40
+flask-cors~=5.0.1

@@ -21,13 +21,13 @@ def register_user(username, password, cf_token):
         return jsonify({
             'success': False,
             'message': f'验证码服务异常: {str(e)}'
-        })
+        }), 500
 
     if not result.get('success'):
         return jsonify({
             'success': False,
             'message': '验证码校验失败'
-        })
+        }), 403
 
     # 检查用户名是否已存在
     if User.query.filter_by(username=username).first():

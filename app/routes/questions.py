@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify, current_app
+from flask import Blueprint, request, jsonify
 from ..services.questoin_service import get_questions
 
 questions_bp = Blueprint('questions', __name__)

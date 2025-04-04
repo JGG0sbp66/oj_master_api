@@ -1,5 +1,4 @@
 from flask import jsonify
-from sqlalchemy import and_, or_
 from ..models import Questions
 import math
 

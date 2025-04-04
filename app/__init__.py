@@ -4,9 +4,9 @@ from flask_cors import CORS
 from .extensions import db
 
 
-def create_app(config_class='config.Config'):  # 注意这里改为 'config.Config'
+def create_app(config_class='config.Config'):
     app = Flask(__name__)
-    app.config.from_object(config_class)  # 确保这行正确执行
+    app.config.from_object(config_class)
 
     # 初始化扩展
     db.init_app(app)

@@ -4,10 +4,11 @@ import jwt
 from flask import current_app
 
 
-def generate_token(uid, role):
+def generate_token(uid, username, role):
     """生成JWT Token"""
     payload = {
         "uid": uid,
+        "username": username,
         "role": role,
         "exp": datetime.utcnow() + current_app.config['JWT_EXPIRATION']
     }

@@ -60,6 +60,7 @@ def verify_token():
             'authenticated': True,
             'user': {
                 'uid': data['uid'],
+                'username': data['username'],
                 'role': data['role']
             }
         })

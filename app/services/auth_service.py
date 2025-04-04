@@ -70,7 +70,7 @@ def login_user(username, password):
 
     try:
         if bcrypt.checkpw(password.encode('utf-8'), user.password.encode('utf-8')):
-            token = generate_token(user.uid, user.role)  # 只生成Token
+            token = generate_token(user.uid, user.username, user.role)  # 生成Token
 
             response = jsonify({
                 'success': True,

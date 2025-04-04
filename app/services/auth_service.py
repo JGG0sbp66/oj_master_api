@@ -2,7 +2,7 @@ from datetime import timedelta
 
 import bcrypt
 import requests
-from flask import jsonify, session
+from flask import jsonify
 
 from ..models import User
 from ..extensions import db
@@ -86,11 +86,11 @@ def login_user(username, password):
             # 设置JWT Cookie
             response.set_cookie(
                 'auth_token',
-                value=token, # Cookie值为JWT Token
-                max_age=int(timedelta(days=7).total_seconds()), # 设置过期时间
-                path='/', # Cookie生效路径（/表示全站可用）
+                value=token,  # Cookie值为JWT Token
+                max_age=int(timedelta(days=7).total_seconds()),  # 设置过期时间
+                path='/',  # Cookie生效路径（/表示全站可用）
                 secure=False,  # 是否仅通过HTTPS传输，生产环境改为True
-                httponly=True, # 禁止JavaScript访问（防XSS）
+                httponly=True,  # 禁止JavaScript访问（防XSS）
                 samesite='Lax'  # 限制第三方网站携带Cookie（防CSRF）
             )
             return response

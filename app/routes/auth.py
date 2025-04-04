@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify, session, current_app
+from flask import Blueprint, request, jsonify, current_app
 from ..services.auth_service import register_user, login_user
 from ..utils.validators import validate_credentials
 import jwt

@@ -2,7 +2,6 @@ from flask import jsonify
 from ..models import RaceData
 
 
-
 def get_race_info(uid):
     # 创建基础查询
     query = RaceData.query

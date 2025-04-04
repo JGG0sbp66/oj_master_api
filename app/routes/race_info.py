@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify, current_app
+from flask import Blueprint, request, jsonify
 from ..services.race_info_service import get_race_info
 race_info_bp = Blueprint('race_info', __name__)
 

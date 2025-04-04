@@ -1,7 +1,8 @@
 # auth_utils.py
 from datetime import datetime
 import jwt
-from flask import current_app  # 获取当前配置
+from flask import current_app
+
 
 def generate_token(uid, role):
     """生成JWT Token"""
@@ -15,6 +16,7 @@ def generate_token(uid, role):
         current_app.config['SECRET_KEY'],
         algorithm=current_app.config['JWT_ALGORITHM']
     )
+
 
 def verify_token(token):
     """验证Token"""

@@ -1,8 +1,9 @@
 from flask import Blueprint, request, jsonify
 import requests
-from flask import current_app as app  # 修改这里
+from flask import current_app as app
 
 turnstile_bp = Blueprint('turnstile', __name__)
+
 
 @turnstile_bp.route('/verify-cf', methods=['POST'])
 def verify():
@@ -18,7 +19,7 @@ def verify():
     response = requests.post(
         "https://challenges.cloudflare.com/turnstile/v0/siteverify",
         data={
-            "secret": app.config['TURNSTILE_SECRET_KEY'],  # 通过 current_app 访问
+            "secret": app.config['TURNSTILE_SECRET_KEY'],
             "response": token
         }
     )

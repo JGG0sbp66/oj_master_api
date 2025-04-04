@@ -1,6 +1,7 @@
-from flask import Blueprint, request, jsonify, session
+from flask import Blueprint, request, jsonify, session, current_app
 from ..services.auth_service import register_user, login_user
 from ..utils.validators import validate_credentials
+import jwt
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -44,3 +45,25 @@ def login():
 
     # 调用服务层处理登录逻辑
     return login_user(username, password)
+
+
+# auth_bp.py
+@auth_bp.route('/verify-token', methods=['GET'])
+def verify_token():
+    token = request.cookies.get('auth_token')
+    if not token:
+        return jsonify({'authenticated': False}), 401
+
+    try:
+        data = jwt.decode(token, current_app.config['SECRET_KEY'], algorithms=["HS256"])
+        return jsonify({
+            'authenticated': True,
+            'user': {
+                'uid': data['uid'],
+                'role': data['role']
+            }
+        })
+    except jwt.ExpiredSignatureError:
+        return jsonify({'authenticated': False, 'message': 'Token已过期'}), 401
+    except jwt.InvalidTokenError:
+        return jsonify({'authenticated': False, 'message': '无效Token'}), 401

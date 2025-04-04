@@ -6,6 +6,7 @@ from flask import jsonify, session
 
 from ..models import User
 from ..extensions import db
+from ..utils.auth_utils import generate_token
 
 
 def register_user(username, password, cf_token):
@@ -61,42 +62,39 @@ def register_user(username, password, cf_token):
             'message': f'注册失败: {str(e)}'
         }), 500
 
+
 def login_user(username, password):
     user = User.query.filter_by(username=username).first()
-
     if not user:
-        return jsonify({
-            'success': False,
-            'message': '用户名或密码错误'
-        }), 401
+        return jsonify({'success': False, 'message': '用户名或密码错误'}), 401
 
     try:
         if bcrypt.checkpw(password.encode('utf-8'), user.password.encode('utf-8')):
-            session.permanent = True
-            session['username'] = username
+            token = generate_token(user.uid, user.role)  # 只生成Token
 
             response = jsonify({
                 'success': True,
-                'message': '登录成功'
+                'message': '登录成功',
+                'user': {
+                    'uid': user.uid,
+                    'username': user.username,
+                    'role': user.role,
+                    'auth_token': token
+                }
             })
 
+            # 设置JWT Cookie
             response.set_cookie(
-                'username',
-                value=username,
-                max_age=int(timedelta(days=7).total_seconds()),  # 将 float 转换为 int
-                path='/',
-                secure=False,
-                httponly=True
+                'auth_token',
+                value=token, # Cookie值为JWT Token
+                max_age=int(timedelta(days=7).total_seconds()), # 设置过期时间
+                path='/', # Cookie生效路径（/表示全站可用）
+                secure=False,  # 是否仅通过HTTPS传输，生产环境改为True
+                httponly=True, # 禁止JavaScript访问（防XSS）
+                samesite='Lax'  # 限制第三方网站携带Cookie（防CSRF）
             )
-
             return response
         else:
-            return jsonify({
-                'success': False,
-                'message': '用户名或密码错误'
-            }), 401
+            return jsonify({'success': False, 'message': '用户名或密码错误'}), 401
     except Exception as e:
-        return jsonify({
-            'success': False,
-            'message': f'密码验证失败: {str(e)}'
-        }), 500
+        return jsonify({'success': False, 'message': f'登录失败: {str(e)}'}), 500

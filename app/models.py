@@ -27,6 +27,14 @@ class Questions(db.Model):
     first_blood = db.Column(db.String(255), nullable=False)
 
 
+class UserQuestionStatus(db.Model):
+    __tablename__ = 'user_question_status'
+    user_id = db.Column(db.Integer, primary_key=True, nullable=False)
+    question_id = db.Column(db.Integer, primary_key=True, nullable=False)
+    state = db.Column(db.Enum('未尝试', '已通过', '未通过'), nullable=False)
+    last_submit_time = db.Column(db.DateTime, nullable=True)
+
+
 class RaceData(db.Model):
     __tablename__ = 'race_data'
 

@@ -2,7 +2,7 @@ from datetime import timedelta
 
 import bcrypt
 import requests
-from flask import jsonify
+from flask import jsonify, make_response
 
 from ..models import User
 from ..extensions import db
@@ -98,3 +98,23 @@ def login_user(username, password):
             return jsonify({'success': False, 'message': '用户名或密码错误'}), 401
     except Exception as e:
         return jsonify({'success': False, 'message': f'登录失败: {str(e)}'}), 500
+
+
+def logout_user():
+    """处理用户退出登录"""
+    # 创建响应对象
+    response = make_response(jsonify({
+        'success': True,
+        'message': '退出登录成功'
+    }))
+
+    # 清除 auth_token Cookie（必须与登录时的设置完全一致）
+    response.delete_cookie(
+        'auth_token',
+        path='/',
+        secure=False,
+        httponly=True,
+        samesite='Lax'
+    )
+
+    return response

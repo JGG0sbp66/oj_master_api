@@ -30,7 +30,7 @@ def question_list():
         return jsonify({"success": False, "message": "参数类型错误"}), 400
 
 
-@questions_bp.route('/question-detail', methods=['GET'])
+@questions_bp.route('/question-detail', methods=['POST'])
 def question_detail():
     try:
         data = request.get_json()

@@ -5,7 +5,7 @@ from ..utils.role_utils import optional_login
 race_bp = Blueprint('race_info', __name__)
 
 
-@race_bp.route('/race-info', methods=['GET'])
+@race_bp.route('/race-info', methods=['POST'])
 @optional_login
 def race_info():
     """题目列表接口"""
@@ -19,11 +19,11 @@ def race_info():
     return get_race_info(race_uid, user_id)
 
 
-@race_bp.route('/race-list', methods=['GET'])
+@race_bp.route('/race-list', methods=['POST'])
 def race_list():
     return get_race_list()
 
-@race_bp.route('/race-rank', methods=['GET'])
+@race_bp.route('/race-rank', methods=['POST'])
 def race_rank():
     data = request.get_json()
     if not data:

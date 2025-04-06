@@ -2,6 +2,7 @@
 from app import create_app
 
 app = create_app()
+app.json.ensure_ascii = False
 
 # 添加调试输出
 print("当前配置:")

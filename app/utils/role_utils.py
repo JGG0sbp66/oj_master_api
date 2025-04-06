@@ -29,6 +29,13 @@ def role_required(*roles):
 
 
 def optional_login(f):
+    """
+        可选登录装饰器。
+        用于在 Flask 视图函数中检查用户的登录状态（通过 Cookie 中的 auth_token）。
+        如果用户已登录（即 auth_token 有效），则将用户 ID 存储在 g.current_user_id 中；
+        如果用户未登录或 Token 无效，则保持游客状态，不影响正常访问。
+        """
+
     @wraps(f)
     def decorated(*args, **kwargs):
         # 清除可能存在的旧用户ID

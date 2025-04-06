@@ -27,8 +27,13 @@ def get_questions(page, category, topic, textinput, user_id=None):
     if category in ['未尝试', '已通过', '未通过']:
         if user_id:  # 登录用户
             statuses = get_user_all_question_statuses(user_id)
-            filtered_ids = [qid for qid, state in statuses.items() if state == category]
-            query = query.filter(Questions.uid.in_(filtered_ids or [0]))
+            if category == '未尝试':
+                # 查询不在状态表中的题目
+                query = query.filter(~Questions.uid.in_(statuses.keys()))
+            else:
+                # 查询状态为指定值的题目
+                filtered_ids = [qid for qid, state in statuses.items() if state == category]
+                query = query.filter(Questions.uid.in_(filtered_ids or [0]))
         else:  # 游客
             if category != '未尝试':
                 return {
@@ -62,7 +67,8 @@ def get_questions(page, category, topic, textinput, user_id=None):
         }
 
         if user_id:  # 只有登录用户需要查询真实状态
-            item["state"] = get_question_status(user_id, q.uid)
+            statuses = get_user_all_question_statuses(user_id)  # 重新获取状态
+            item["state"] = statuses.get(q.uid, "未尝试")
 
         question_list.append(item)
 

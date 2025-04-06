@@ -17,11 +17,13 @@ def create_app(config_class='config.Config'):  # 注意这里改为 'config.Conf
     from .routes.turnstile import turnstile_bp
     from .routes.questions import questions_bp
     from .routes.race_info import race_info_bp
+    from .routes.first_blood import first_blood_bp
 
     app.register_blueprint(auth_bp, url_prefix='/api')
     app.register_blueprint(turnstile_bp, url_prefix='/api')
     app.register_blueprint(questions_bp,url_prefix='/api')
     app.register_blueprint(race_info_bp, url_prefix='/api')
+    app.register_blueprint(first_blood_bp, url_prefix='/api')
 
     app.permanent_session_lifetime = app.config['PERMANENT_SESSION_LIFETIME']
 

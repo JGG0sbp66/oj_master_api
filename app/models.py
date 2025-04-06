@@ -49,6 +49,7 @@ class RaceData(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     problems_list = db.Column(db.JSON, nullable=False)
     user_list = db.Column(db.JSON, nullable=False)
+    status = db.Column(db.String(255), nullable=False)
 
 class FirstBloodData(db.Model):
     __tablename__ = 'first_blood_records'

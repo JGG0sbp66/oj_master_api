@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify, current_app, g
-from ..services.questoin_service import get_questions
+from ..services.questoin_service import get_questions, get_question_detail
 from ..utils.role_utils import optional_login
 
 questions_bp = Blueprint('questions', __name__)
@@ -26,5 +26,20 @@ def question_list():
             "total_page": result.get('total_page', 1),
             "total_count": result.get('total_count', 0)
         })
+    except ValueError:
+        return jsonify({"success": False, "message": "参数类型错误"}), 400
+
+
+@questions_bp.route('/question-detail', methods=['GET'])
+def question_detail():
+    try:
+        data = request.get_json()
+        question_id = data.get('uid', '')
+        result = get_question_detail(int(question_id))
+        return jsonify({
+            "success": True,
+            "question_detail": result
+        })
+
     except ValueError:
         return jsonify({"success": False, "message": "参数类型错误"}), 400

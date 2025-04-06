@@ -18,13 +18,4 @@ def race_info():
 
 @race_bp.route('/race-list', methods=['GET'])
 def race_list():
-    # 获取请求数据
-    data = request.get_json()
-    if not data:
-        return jsonify({"success": False, "message": "请求数据必须是JSON格式"}), 400
-
-    # page, limit
-    page = data.get('page', 1)
-    limit = data.get('limit', 4)
-
-    return get_race_list(page, limit)
+    return get_race_list()

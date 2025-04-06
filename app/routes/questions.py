@@ -34,6 +34,9 @@ def question_list():
 def question_detail():
     try:
         data = request.get_json()
+        if not data:
+            return jsonify({"success": False, "message": "请求数据必须是JSON格式"}), 400
+
         question_id = data.get('uid', '')
         result = get_question_detail(int(question_id))
         return jsonify({

@@ -24,18 +24,13 @@ def create_app(config_class='config.Config'):
 
     # 延迟导入蓝图
     from .routes.auth import auth_bp
-    from .routes.turnstile import turnstile_bp
     from .routes.questions import questions_bp
     from .routes.race import race_bp
-    from .routes.first_blood import first_blood_bp
     from .routes.admin_routes.admin_api_test import admin_test_bp
 
-
     app.register_blueprint(auth_bp, url_prefix='/api')
-    app.register_blueprint(turnstile_bp, url_prefix='/api')
-    app.register_blueprint(questions_bp,url_prefix='/api')
+    app.register_blueprint(questions_bp, url_prefix='/api')
     app.register_blueprint(race_bp, url_prefix='/api')
-    app.register_blueprint(first_blood_bp, url_prefix='/api')
     app.register_blueprint(admin_test_bp, url_prefix='/api')
 
     app.permanent_session_lifetime = app.config['PERMANENT_SESSION_LIFETIME']

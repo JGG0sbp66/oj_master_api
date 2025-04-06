@@ -61,10 +61,11 @@ class RaceData(db.Model):
     status = db.Column(db.String(255), nullable=False)
 
 
-class FirstBloodData(db.Model):
-    __tablename__ = 'first_blood_records'
+class RaceRank(db.Model):
+    __tablename__ = 'race_rank'
 
-    user_id = db.Column(db.Integer, nullable=False)
-    problem_id = db.Column(db.Integer, primary_key=True, nullable=False)
+    user_id = db.Column(db.Integer, primary_key=True, nullable=False)
     contest_id = db.Column(db.Integer, primary_key=True, nullable=False)
-    solve_time = db.Column(db.DateTime, nullable=False)
+    problem_stats = db.Column(db.JSON, nullable=False)
+    total_solved = db.Column(db.Integer, nullable=False)
+    total_penalty = db.Column(db.Integer, nullable=False)

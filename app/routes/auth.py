@@ -1,5 +1,6 @@
 from flask import Blueprint, request, jsonify, current_app
 from ..services.auth_service import register_user, login_user, logout_user
+from ..services.turnstile_service import check_cf_token
 from ..utils.validators import validate_credentials
 import jwt
 
@@ -73,3 +74,11 @@ def verify_token():
 def logout():
     """退出登录接口"""
     return logout_user()
+
+@auth_bp.route('/verify-cf', methods=['POST'])
+def verify():
+    data = request.get_json()
+    if not data:
+        return jsonify({"success": False, "error": "请求数据必须是 JSON 格式"}), 400
+
+    return check_cf_token(data)

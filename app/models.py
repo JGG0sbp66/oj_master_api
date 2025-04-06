@@ -4,6 +4,7 @@ from datetime import datetime
 
 class User(db.Model):
     __tablename__ = 'user_data'
+
     uid = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
     password = db.Column(db.String(120), nullable=False)
@@ -12,6 +13,7 @@ class User(db.Model):
 
 class Questions(db.Model):
     __tablename__ = 'questionslist'
+
     uid = db.Column(db.Integer, primary_key=True)
     state = db.Column(db.String(80), unique=True, nullable=False)
     title = db.Column(db.String(255), nullable=False)
@@ -29,10 +31,16 @@ class Questions(db.Model):
 
 class UserQuestionStatus(db.Model):
     __tablename__ = 'user_question_status'
-    user_id = db.Column(db.Integer, primary_key=True, nullable=False)
-    question_id = db.Column(db.Integer, primary_key=True, nullable=False)
-    state = db.Column(db.Enum('未尝试', '已通过', '未通过'), nullable=False)
-    last_submit_time = db.Column(db.DateTime, nullable=True)
+
+    uid = db.Column(db.Integer, primary_key=True, autoincrement=True, nullable=False, comment='唯一标识')
+    race_id = db.Column(db.Integer, primary_key=True, nullable=False, default=0, comment='比赛uid')
+    user_id = db.Column(db.Integer, primary_key=True, nullable=False, comment='用户uid')
+    question_id = db.Column(db.Integer, primary_key=True, nullable=False, comment='题目uid')
+    state = db.Column(db.Enum('未尝试', '已通过', '未通过', name='status_enum'), nullable=False, default='未尝试',
+                      comment='作答状态')
+    first_blood = db.Column(db.Integer, nullable=True, comment='一血用户的uid')
+    submit = db.Column(db.Integer, nullable=True, comment='提交数')
+    solve = db.Column(db.Integer, nullable=True, comment='解决数')
 
 
 class RaceData(db.Model):
@@ -51,10 +59,11 @@ class RaceData(db.Model):
     user_list = db.Column(db.JSON, nullable=False)
     status = db.Column(db.String(255), nullable=False)
 
+
 class FirstBloodData(db.Model):
     __tablename__ = 'first_blood_records'
 
     user_id = db.Column(db.Integer, nullable=False)
-    problem_id=db.Column(db.Integer, primary_key=True, nullable=False)
-    contest_id=db.Column(db.Integer, primary_key=True, nullable=False)
-    solve_time=db.Column(db.DateTime, nullable=False)
+    problem_id = db.Column(db.Integer, primary_key=True, nullable=False)
+    contest_id = db.Column(db.Integer, primary_key=True, nullable=False)
+    solve_time = db.Column(db.DateTime, nullable=False)

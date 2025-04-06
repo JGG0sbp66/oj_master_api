@@ -6,7 +6,8 @@ def get_question_status(user_id, question_id):
     """获取用户对特定题目的状态"""
     status = UserQuestionStatus.query.filter_by(
         user_id=user_id,
-        question_id=question_id
+        question_id=question_id,
+        race_id = 0
     ).first()
 
     return status.state if status else "未尝试"  # 默认状态
@@ -14,7 +15,7 @@ def get_question_status(user_id, question_id):
 
 def get_user_all_question_statuses(user_id):
     """获取用户所有题目的状态字典（性能优化用）"""
-    statuses = UserQuestionStatus.query.filter_by(user_id=user_id).all()
+    statuses = UserQuestionStatus.query.filter_by(user_id=user_id, race_id =0).all()
     return {s.question_id: s.state for s in statuses}
 
 

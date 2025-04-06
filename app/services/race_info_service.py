@@ -1,5 +1,5 @@
 from flask import jsonify
-from ..models import RaceData, Questions, UserQuestionStatus
+from ..models import RaceData, Questions, UserQuestionStatus, RaceRank
 
 
 def get_race_info(race_id, user_id=None):
@@ -83,4 +83,25 @@ def get_race_list():
 
     return jsonify({
         "race_info": race_list
+    })
+
+def get_race_rank(race_id):
+    query = RaceRank.query
+    # 动态添加过滤条件
+
+    query = query.filter(RaceRank.contest_id == race_id)
+    result = query.all()
+
+    race_rank_list = []
+    for r in result:
+        race_rank_list.append({
+            "user_id": r.user_id,
+            "contest_id": r.contest_id,
+            "problem_stats": r.problem_stats,
+            "total_solved": r.total_solved,
+            "total_penalty": r.total_penalty
+        })
+
+    return jsonify({
+        "race_rank": race_rank_list
     })

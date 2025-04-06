@@ -8,20 +8,19 @@ race_bp = Blueprint('race_info', __name__)
 @race_bp.route('/race-info', methods=['POST'])
 @optional_login
 def race_info():
-    """题目列表接口"""
-    data = request.get_json()
-    if not data:
-        return jsonify({"success": False, "message": "请求数据必须是JSON格式"}), 400
+    try:
+        data = request.get_json()
+        user_id = getattr(g, 'current_user_id', None)
+        return get_race_info(race_id=int(data.get('uid', 1)), user_id=user_id)
 
-    user_id = getattr(g, 'current_user_id', None)
-    race_uid = data.get('uid', '')
-
-    return get_race_info(race_uid, user_id)
+    except ValueError:
+        return jsonify({"success": False, "message": "参数类型错误"}), 400
 
 
 @race_bp.route('/race-list', methods=['POST'])
 def race_list():
     return get_race_list()
+
 
 @race_bp.route('/race-rank', methods=['POST'])
 def race_rank():

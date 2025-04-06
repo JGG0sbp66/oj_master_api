@@ -1,5 +1,3 @@
-import math
-
 from flask import jsonify
 from ..models import RaceData
 
@@ -33,14 +31,13 @@ def get_race_info(uid):
     })
 
 
-def get_race_list(page, limit=4):
+def get_race_list():
     query = RaceData.query
-    offset = (page - 1) * limit
 
     # 获取分页结果
     total_count = query.count()
     # 构建响应
-    races = query.limit(limit).offset(offset).all()
+    races = query.all()
     race_list = []
 
     for r in races:
@@ -55,7 +52,5 @@ def get_race_list(page, limit=4):
         })
 
     return jsonify({
-        "race_info": race_list,
-        "total_page": math.ceil(total_count / limit),
-        "total_count": total_count
+        "race_info": race_list
     })

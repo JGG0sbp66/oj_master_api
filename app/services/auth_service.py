@@ -2,7 +2,7 @@ from datetime import timedelta
 
 import bcrypt
 import requests
-from flask import jsonify, session
+from flask import jsonify, make_response
 
 from ..models import User
 from ..extensions import db
@@ -70,7 +70,7 @@ def login_user(username, password):
 
     try:
         if bcrypt.checkpw(password.encode('utf-8'), user.password.encode('utf-8')):
-            token = generate_token(user.uid, user.role)  # 只生成Token
+            token = generate_token(user.uid, user.username, user.role)  # 生成Token
 
             response = jsonify({
                 'success': True,
@@ -86,11 +86,11 @@ def login_user(username, password):
             # 设置JWT Cookie
             response.set_cookie(
                 'auth_token',
-                value=token, # Cookie值为JWT Token
-                max_age=int(timedelta(days=7).total_seconds()), # 设置过期时间
-                path='/', # Cookie生效路径（/表示全站可用）
+                value=token,  # Cookie值为JWT Token
+                max_age=int(timedelta(days=7).total_seconds()),  # 设置过期时间
+                path='/',  # Cookie生效路径（/表示全站可用）
                 secure=False,  # 是否仅通过HTTPS传输，生产环境改为True
-                httponly=True, # 禁止JavaScript访问（防XSS）
+                httponly=True,  # 禁止JavaScript访问（防XSS）
                 samesite='Lax'  # 限制第三方网站携带Cookie（防CSRF）
             )
             return response
@@ -98,3 +98,23 @@ def login_user(username, password):
             return jsonify({'success': False, 'message': '用户名或密码错误'}), 401
     except Exception as e:
         return jsonify({'success': False, 'message': f'登录失败: {str(e)}'}), 500
+
+
+def logout_user():
+    """处理用户退出登录"""
+    # 创建响应对象
+    response = make_response(jsonify({
+        'success': True,
+        'message': '退出登录成功'
+    }))
+
+    # 清除 auth_token Cookie（必须与登录时的设置完全一致）
+    response.delete_cookie(
+        'auth_token',
+        path='/',
+        secure=False,
+        httponly=True,
+        samesite='Lax'
+    )
+
+    return response

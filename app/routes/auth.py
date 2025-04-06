@@ -1,5 +1,5 @@
-from flask import Blueprint, request, jsonify, session, current_app
-from ..services.auth_service import register_user, login_user
+from flask import Blueprint, request, jsonify, current_app
+from ..services.auth_service import register_user, login_user, logout_user
 from ..utils.validators import validate_credentials
 import jwt
 
@@ -47,7 +47,6 @@ def login():
     return login_user(username, password)
 
 
-# auth_bp.py
 @auth_bp.route('/verify-token', methods=['GET'])
 def verify_token():
     token = request.cookies.get('auth_token')
@@ -60,6 +59,7 @@ def verify_token():
             'authenticated': True,
             'user': {
                 'uid': data['uid'],
+                'username': data['username'],
                 'role': data['role']
             }
         })
@@ -67,3 +67,9 @@ def verify_token():
         return jsonify({'authenticated': False, 'message': 'Token已过期'}), 401
     except jwt.InvalidTokenError:
         return jsonify({'authenticated': False, 'message': '无效Token'}), 401
+
+
+@auth_bp.route('/logout', methods=['POST'])
+def logout():
+    """退出登录接口"""
+    return logout_user()

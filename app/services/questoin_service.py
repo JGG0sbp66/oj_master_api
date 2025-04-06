@@ -78,3 +78,20 @@ def get_questions(page, category, topic, textinput, user_id=None):
         "total_page": math.ceil(total_count / limit),
         "total_count": total_count
     }
+
+
+def get_question_detail(question_id):
+
+    item = Questions.query.filter_by(uid=question_id).first()
+    question = {
+        "title": item.title,
+        "tle": item.tle,
+        "mle": item.mle,
+        "description": item.description,
+        "pattern_text": item.pattern_text,
+        "print_text": item.print_text,
+        "test_input": item.test_input,
+        "test_print": item.test_print
+    }
+
+    return question

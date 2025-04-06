@@ -26,7 +26,8 @@ class Questions(db.Model):
     print_text = db.Column(db.String(255), nullable=False)
     test_input = db.Column(db.String(255), nullable=False)
     test_print = db.Column(db.String(255), nullable=False)
-    first_blood = db.Column(db.String(255), nullable=False)
+    tle = db.Column(db.Integer, nullable=False)
+    mle = db.Column(db.Integer, nullable=False)
 
 
 class UserQuestionStatus(db.Model):

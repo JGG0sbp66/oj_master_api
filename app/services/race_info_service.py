@@ -1,6 +1,5 @@
 from flask import jsonify
-from ..models import RaceData, Questions, UserQuestionStatus, RaceRank
-
+from ..models import RaceData, QuestionsData, UserQuestionStatus, RaceRank
 
 def get_race_info(race_id, user_id=None):
     """获取比赛信息（支持游客模式）"""
@@ -35,16 +34,17 @@ def get_race_info(race_id, user_id=None):
     # 构建题目信息
     problems_info = []
     if race.problems_list:
-        questions = {q.uid: q for q in Questions.query.filter(
-            Questions.uid.in_(race.problems_list)
+        questions = {q.uid: q for q in QuestionsData.query.filter(
+            QuestionsData.uid.in_(race.problems_list)
         )}
 
         for pid in race.problems_list:
             question = questions.get(pid)
             stats = global_stats.get(pid, {})
+            question_data = question.question if question else {}
 
             problems_info.append({
-                "title": question.title if question else "未知题目",
+                "title": question_data.get("title", "未知题目"),  # 从JSON字段获取标题
                 "status": problem_statuses.get(pid, "未尝试") if user_id else "未登录",
                 "submit_num": stats.get("submit_num", 0),
                 "solve_num": stats.get("solve_num", 0),
@@ -62,7 +62,6 @@ def get_race_info(race_id, user_id=None):
         }
     })
 
-
 def get_race_list():
     query = RaceData.query
 
@@ -74,8 +73,8 @@ def get_race_list():
         race_list.append({
             "title": r.title,
             "logos": r.logos,
-            "startTime": r.start_time,
-            "endTime": r.end_time,
+            "startTime": r.start_time.strftime("%Y-%m-%d %H:%M:%S"),
+            "endTime": r.end_time.strftime("%Y-%m-%d %H:%M:%S"),
             "duration": r.duration,
             "status": r.status,
             "tags": r.tags
@@ -87,8 +86,6 @@ def get_race_list():
 
 def get_race_rank(race_id):
     query = RaceRank.query
-    # 动态添加过滤条件
-
     query = query.filter(RaceRank.contest_id == race_id)
     result = query.all()
 

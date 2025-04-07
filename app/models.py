@@ -11,23 +11,12 @@ class User(db.Model):
     role = db.Column(db.String(20), default='user')
 
 
-class Questions(db.Model):
-    __tablename__ = 'questionslist'
+class QuestionsData(db.Model):
+    __tablename__ = 'questions_data'
 
     uid = db.Column(db.Integer, primary_key=True)
-    state = db.Column(db.String(80), unique=True, nullable=False)
-    title = db.Column(db.String(255), nullable=False)
-    topic = db.Column(db.String(255), nullable=False)
-    submit_num = db.Column(db.Integer, nullable=False)
-    solve_num = db.Column(db.Integer, nullable=False)
-    pass_rate = db.Column(db.Float, nullable=False)
-    description = db.Column(db.String(255), nullable=False)
-    pattern_text = db.Column(db.String(255), nullable=False)
-    print_text = db.Column(db.String(255), nullable=False)
-    test_input = db.Column(db.String(255), nullable=False)
-    test_print = db.Column(db.String(255), nullable=False)
-    tle = db.Column(db.Integer, nullable=False)
-    mle = db.Column(db.Integer, nullable=False)
+    question = db.Column(db.JSON, nullable=True)
+    topic = db.Column(db.Enum('入门', '普及', '提高', '省选', 'NOI', 'CTSC', name='status_enum'))
 
 
 class UserQuestionStatus(db.Model):

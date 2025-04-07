@@ -17,7 +17,7 @@ def race_info():
         return jsonify({"success": False, "message": "参数类型错误"}), 400
 
 
-@race_bp.route('/race-list', methods=['POST'])
+@race_bp.route('/race-list', methods=['GET'])
 def race_list():
     return get_race_list()
 

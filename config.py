@@ -24,3 +24,9 @@ class Config:
         'user': 1,
         'admin': 2
     }
+
+    # 头像配置
+    AVATAR_UPLOAD_DIR = os.path.join(os.path.dirname(__file__), 'app', 'user_img', 'avatar')
+    ALLOWED_AVATAR_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+    MAX_AVATAR_SIZE = 2 * 1024 * 1024  # 2MB
+    DEFAULT_AVATAR = 'default.png'

@@ -58,7 +58,8 @@ def get_race_info(race_id, user_id=None):
             "end_time": race.end_time.strftime("%Y-%m-%d %H:%M:%S"),
             "problems": problems_info,
             "user_num": len(race.user_list),
-            "user_status": "已登录" if user_id else "游客"
+            "user_status": "已登录" if user_id else "游客",
+            "tags": race.tags
         }
     })
 

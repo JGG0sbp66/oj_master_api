@@ -1,3 +1,4 @@
+import os
 import re
 
 
@@ -13,3 +14,9 @@ def validate_credentials(username, password):
         return {'valid': False, 'message': '密码必须是6-18位字母数字组合'}
 
     return {'valid': True, 'message': '验证通过'}
+
+
+def is_safe_filename(filename):
+    """防止路径穿越攻击"""
+    return not filename.startswith(('.', '/')) and ('..' not in filename) and (
+                os.path.splitext(filename)[1].lower() in ('.png', '.jpg', '.jpeg'))

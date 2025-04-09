@@ -28,12 +28,14 @@ def create_app(config_class='config.Config'):
     from .routes.race import race_bp
     from .routes.admin_routes.admin_api_test import admin_test_bp
     from .routes.user_routes.avatar import avatar_bp
+    from .routes.askAi import askAi_bp
 
     app.register_blueprint(auth_bp, url_prefix='/api')
     app.register_blueprint(questions_bp, url_prefix='/api')
     app.register_blueprint(race_bp, url_prefix='/api')
     app.register_blueprint(admin_test_bp, url_prefix='/api')
     app.register_blueprint(avatar_bp, url_prefix='/api')
+    app.register_blueprint(askAi_bp, url_prefix='/api')
 
     app.permanent_session_lifetime = app.config['PERMANENT_SESSION_LIFETIME']
 

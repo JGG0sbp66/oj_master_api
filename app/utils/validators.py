@@ -16,7 +16,15 @@ def validate_credentials(username, password):
     return {'valid': True, 'message': '验证通过'}
 
 
+from config import Config
+
+
 def is_safe_filename(filename):
-    """防止路径穿越攻击"""
-    return not filename.startswith(('.', '/')) and ('..' not in filename) and (
-                os.path.splitext(filename)[1].lower() in ('.png', '.jpg', '.jpeg'))
+    """检查文件名是否安全（防止路径遍历攻击）"""
+    allowed_extensions = Config.ALLOWED_AVATAR_EXTENSIONS
+
+    return (
+            not filename.startswith(('.', '/')) and
+            '..' not in filename and
+            os.path.splitext(filename)[1][1:].lower() in allowed_extensions
+    )

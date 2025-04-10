@@ -30,3 +30,19 @@ class Config:
     ALLOWED_AVATAR_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
     MAX_AVATAR_SIZE = 2 * 1024 * 1024  # 2MB
     DEFAULT_AVATAR = 'default.png'
+
+    # ollama 路径配置
+    OLLAMA_ADDRESS = "http://192.168.13.191:11434/api"
+
+    # SMTP 和 Redis 配置
+    SMTP_CONFIG = {
+        "host": "smtp.163.com",
+        "port": 465,
+        "user": "oj_master@163.com",
+        "password": "VRYdv36xp5TxuzPs"
+    }
+    REDIS_CONFIG = {
+        "host": "localhost",
+        "port": 6379,
+        "db": 0
+    }

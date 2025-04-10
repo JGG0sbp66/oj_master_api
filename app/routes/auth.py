@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify, current_app
 from ..services.auth_service import register_user, login_user, logout_user
-from ..services.turnstile_service import check_cf_token
+from ..services.turnstile_service import check_cf_token, generate_code, send_verification_email, save_code_to_redis, \
+    verify_email_code
 from ..utils.validators import validate_credentials
 import jwt
 
@@ -15,10 +16,12 @@ def register():
 
     username = data.get('username', '').strip()
     password = data.get('password', '').strip()
+    email = data.get('email', '').strip()
+    email_code = data.get('email_code', '').strip()
     cfToken = data.get('cfToken', '').strip()
 
     # 验证输入
-    validation_result = validate_credentials(username, password)
+    validation_result = validate_credentials(username, password, email)
     if not validation_result['valid']:
         return jsonify({
             'success': False,
@@ -26,7 +29,7 @@ def register():
         }), 400
 
     # 调用服务层处理注册逻辑
-    return register_user(username, password, cfToken)
+    return register_user(username, password, email, email_code, cfToken)
 
 
 @auth_bp.route('/login', methods=['POST'])
@@ -75,6 +78,7 @@ def logout():
     """退出登录接口"""
     return logout_user()
 
+
 @auth_bp.route('/verify-cf', methods=['POST'])
 def verify():
     data = request.get_json()
@@ -82,3 +86,33 @@ def verify():
         return jsonify({"success": False, "error": "请求数据必须是 JSON 格式"}), 400
 
     return check_cf_token(data)
+
+
+# 发送验证码接口
+@auth_bp.route('/send-email-code', methods=['POST'])
+def send_verify_code():
+    data = request.get_json()
+    email = data.get("email")
+
+    if not email:
+        return jsonify({"success": False, "message": "邮箱不能为空"}), 400
+
+    code = generate_code()
+    if send_verification_email(email, code):
+        save_code_to_redis(email, code)
+        return jsonify({"success": True, "message": "验证码已发送"})
+    else:
+        return jsonify({"success": False, "message": "邮件发送失败"}), 500
+
+
+# 校验验证码接口
+@auth_bp.route('/verify-email-code', methods=['POST'])
+def verify_code():
+    data = request.get_json()
+    email = data.get("email")
+    user_code = data.get("code")
+
+    if not all([email, user_code]):
+        return jsonify({"success": False, "message": "参数不完整"}), 400
+
+    return verify_email_code(email, user_code)

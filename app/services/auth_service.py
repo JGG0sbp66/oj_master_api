@@ -9,7 +9,7 @@ from ..extensions import db
 from ..utils.auth_utils import generate_token
 
 
-def register_user(username, password, cf_token):
+def register_user(username, password, email, email_code, cf_token):
     # 验证 Cloudflare Turnstile
     try:
         response = requests.post(
@@ -17,17 +17,37 @@ def register_user(username, password, cf_token):
             json={"cfToken": cf_token},
             headers={"Content-Type": "application/json"}
         )
-        result = response.json()
+        Cloudflare_Turnstile_result = response.json()
     except Exception as e:
         return jsonify({
             'success': False,
             'message': f'验证码服务异常: {str(e)}'
         }), 500
 
-    if not result.get('success'):
+    if not Cloudflare_Turnstile_result.get('success'):
         return jsonify({
             'success': False,
             'message': '验证码校验失败'
+        }), 403
+
+    # 验证邮箱验证码
+    try:
+        response = requests.post(
+            "http://localhost:5000/api/verify-email-code",
+            json={"email": email, "code": email_code},
+            headers={"Content-Type": "application/json"}
+        )
+        email_code_result = response.json()
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'验证码服务异常: {str(e)}'
+        }), 500
+
+    if not email_code_result.get('success'):
+        return jsonify({
+            'success': False,
+            'message': '邮箱验证码错误'
         }), 403
 
     # 检查用户名是否已存在
@@ -48,7 +68,7 @@ def register_user(username, password, cf_token):
 
     # 创建新用户
     try:
-        new_user = User(username=username, password=hashed_password.decode('utf-8'))
+        new_user = User(username=username, password=hashed_password.decode('utf-8'), email=email)
         db.session.add(new_user)
         db.session.commit()
         return jsonify({

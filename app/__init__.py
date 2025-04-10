@@ -2,6 +2,8 @@
 from flask import Flask
 from flask_cors import CORS
 from .extensions import db
+import logging
+from logging.handlers import RotatingFileHandler
 
 
 def create_app(config_class='config.Config'):
@@ -38,5 +40,13 @@ def create_app(config_class='config.Config'):
     app.register_blueprint(askAi_bp, url_prefix='/api')
 
     app.permanent_session_lifetime = app.config['PERMANENT_SESSION_LIFETIME']
+
+    # 配置日志
+    handler = RotatingFileHandler('app.log', maxBytes=10000, backupCount=3)
+    handler.setFormatter(logging.Formatter(
+        '[%(asctime)s] %(levelname)s in %(module)s: %(message)s'
+    ))
+    app.logger.addHandler(handler)
+    app.logger.setLevel(logging.INFO)
 
     return app

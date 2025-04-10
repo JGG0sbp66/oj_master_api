@@ -5,7 +5,7 @@ from ..services.ollama_service import generate_completion_stream
 askAi_bp = Blueprint('askAi', __name__)
 
 
-@askAi_bp.route('/askAi-msg', methods=['GET'])
+@askAi_bp.route('/askAi-msg', methods=['POST'])
 def stream_to_ai():
     try:
         data = request.get_json()

@@ -1,8 +1,9 @@
 import requests
 import json
+from config import Config
 
 # 基础初始化设置
-base_url = "http://192.168.13.191:11434/api"
+base_url = Config.OLLAMA_ADDRESS
 headers = {"Content-Type": "application/json"}
 
 

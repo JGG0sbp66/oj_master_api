@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
+
+        body {
+            font-family: 'Inter', 'Helvetica Neue', sans-serif;
+            line-height: 1.6;
+            color: #2d3436;
+            background-color: #f8f9fa;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 40px auto;
+            padding: 40px;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .container:hover {
+            transform: translateY(-3px);
+        }
+
+        .header {
+            font-size: 28px;
+            font-weight: 700;
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 35px;
+            position: relative;
+        }
+
+        .header::after {
+            content: "";
+            display: block;
+            width: 50px;
+            height: 3px;
+            background: #4a90e2;
+            margin: 15px auto;
+            border-radius: 2px;
+        }
+
+        .code {
+            letter-spacing: 5px;
+            font-size: 42px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #6c5ce7, #4a90e2);
+            color: white;
+            padding: 20px 40px;
+            border-radius: 12px;
+            margin: 30px auto;
+            display: inline-block;
+            box-shadow: 0 4px 20px rgba(106,90,205,0.2);
+            animation: codePop 0.6s cubic-bezier(0.22, 0.61, 0.36, 1);
+        }
+
+        @keyframes codePop {
+            0% { opacity: 0; transform: scale(0.8); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+
+        .security-tip {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #636e72;
+            margin: 25px 0;
+            font-size: 14px;
+        }
+
+        .shield-icon {
+            width: 20px;
+            height: 20px;
+            fill: #4a90e2;
+        }
+
+        .footer {
+            margin-top: 40px;
+            padding-top: 25px;
+            border-top: 1px solid #eee;
+            color: #7f8c8d;
+            font-size: 12px;
+            text-align: center;
+        }
+
+        @media (max-width: 640px) {
+            .container {
+                padding: 25px;
+                margin: 20px;
+            }
+            .code {
+                font-size: 32px;
+                padding: 15px 30px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">OJ_Master 验证码</div>
+
+        <p>感谢您注册OJ_Master平台，请使用以下验证码完成身份验证：</p>
+
+        <div class="security-tip">
+            <svg class="shield-icon" viewBox="0 0 24 24">
+                <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/>
+            </svg>
+            <span>安全提示：该验证码用于身份验证，请勿泄露给他人</span>
+        </div>
+
+        <div class="code">${verification_code}</div>
+
+        <p>验证码将在 <strong style="color:#e67e22;">5分钟</strong> 后失效，请及时完成验证。</p>
+        <p>如非本人操作，请立即忽略此邮件。</p>
+
+        <div class="footer">
+            <p>系统自动发送，请勿直接回复</p>
+            <p>© 2025 OJ_Master 所谓混学团队</p>
+        </div>
+    </div>
+</body>
+</html>

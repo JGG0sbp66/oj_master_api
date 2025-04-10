@@ -17,7 +17,7 @@ class Config:
     PERMANENT_SESSION_LIFETIME = timedelta(minutes=30)
 
     # Turnstile 验证配置
-    TURNSTILE_SECRET_KEY = "0x4AAAAAABC_Oa6dJZB8d7Ql7PRLdDli0Vc"
+    TURNSTILE_SECRET_KEY = "cloudfare 验证码密钥"
 
     # 角色权限定义
     ROLES = {
@@ -39,7 +39,7 @@ class Config:
         "host": "smtp.163.com",
         "port": 465,
         "user": "oj_master@163.com",
-        "password": "VRYdv36xp5TxuzPs"
+        "password": "smtp密钥"
     }
     REDIS_CONFIG = {
         "host": "localhost",

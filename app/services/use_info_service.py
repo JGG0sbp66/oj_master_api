@@ -1,0 +1,267 @@
+from flask import send_from_directory, jsonify, current_app
+
+from app.models import User, QuestionsData, RaceRank, RaceData
+from app.utils.validators import is_safe_filename
+from config import Config
+import os
+
+
+def get_avatar_service(user_id):
+    """支持多格式的头像获取服务"""
+    # 检查默认头像是否存在
+    if not os.path.exists(os.path.join(Config.AVATAR_UPLOAD_DIR, Config.DEFAULT_AVATAR)):
+        return jsonify({"success": False, "message": "默认头像不存在"}), 404
+
+    # 用户未登录/未指定用户ID时返回默认头像
+    if user_id is None:
+        return send_avatar_file(Config.DEFAULT_AVATAR)
+
+    # 尝试查找用户头像（支持多种格式）
+    avatar_filename = find_user_avatar(user_id)
+    return send_avatar_file(avatar_filename or Config.DEFAULT_AVATAR)
+
+
+def send_avatar_file(filename):
+    """安全发送头像文件"""
+    if not is_safe_filename(filename):
+        return jsonify({"success": False, "message": "非法文件名"}), 400
+
+    try:
+        return send_from_directory(
+            directory=Config.AVATAR_UPLOAD_DIR,
+            path=filename,
+            max_age=3600
+        )
+    except FileNotFoundError:
+        return jsonify({"success": False, "message": "头像文件不存在"}), 404
+
+
+def find_user_avatar(user_id):
+    """查找用户可能存在的头像文件（支持多格式）"""
+    for ext in Config.ALLOWED_AVATAR_EXTENSIONS:
+        filename = f"{user_id}.{ext}"
+        filepath = os.path.join(Config.AVATAR_UPLOAD_DIR, filename)
+        if os.path.exists(filepath):
+            return filename
+    return None
+
+
+def save_avatar(user_id, file):
+    """保存用户上传的头像（自动处理格式）"""
+    # 获取安全的文件扩展名
+    file_ext = file.filename.rsplit('.', 1)[1].lower()
+    if file_ext not in Config.ALLOWED_AVATAR_EXTENSIONS:
+        raise ValueError("不支持的文件类型")
+
+    # 删除用户旧头像（所有格式）
+    delete_old_avatars(user_id)
+
+    # 保存新头像（格式统一为user_id.ext）
+    filename = f"{user_id}.{file_ext}"
+    file.save(os.path.join(Config.AVATAR_UPLOAD_DIR, filename))
+    return filename
+
+
+def delete_old_avatars(user_id):
+    """删除用户所有格式的旧头像"""
+    for ext in Config.ALLOWED_AVATAR_EXTENSIONS:
+        old_file = os.path.join(Config.AVATAR_UPLOAD_DIR, f"{user_id}.{ext}")
+        try:
+            os.remove(old_file)
+        except FileNotFoundError:
+            pass
+
+
+def get_user_questions(user_id, limit=10):
+    """
+    获取用户最近做的题目（带题目详情）
+
+    参数:
+        user_id: 用户ID
+        limit: 返回记录数（默认10条）
+    """
+    # 1. 获取用户做题记录
+    user = User.query.get(user_id)
+    if not user or not user.questions:
+        return []
+
+    # 2. 提取最近的题目UID和时间
+    sorted_questions = sorted(
+        user.questions,
+        key=lambda x: x['submit_time'],
+        reverse=True
+    )[:limit]
+
+    # 3. 获取题目详细信息
+    question_uids = [q['question_uid'] for q in sorted_questions]
+    questions_data = QuestionsData.query.filter(
+        QuestionsData.uid.in_(question_uids)
+    ).all()
+
+    # 4. 构建结果
+    result = []
+    for user_record in sorted_questions:
+        # 找到对应的题目详情
+        detail = next(
+            (qd for qd in questions_data
+             if str(qd.uid) == user_record['question_uid']),
+            None
+        )
+        if detail:
+            result.append({
+                "submit_time": user_record['submit_time'],
+                "title": detail.question.get('title'),
+                "topic": str(detail.topic),
+                "question_uid": user_record['question_uid']
+            })
+
+    return result
+
+
+def get_user_race(user_id, limit=10):
+    """
+    获取用户最近报名的比赛（带比赛详情和排名信息）
+
+    参数:
+        user_id: 用户ID
+        limit: 返回记录数（默认10条）
+    返回:
+        [{
+            "register_time": "报名时间",
+            "title": "比赛标题",
+            "start_time": "开始时间",
+            "end_time": "结束时间",
+            "race_uid": "比赛ID",
+            "status": "比赛状态",
+            "ranking": {
+                "rank": 排名,
+                "total_solved": 解题数,
+                "total_penalty": 总罚时,
+                "problem_stats": 题目详情,
+                "total_participants": 总参赛人数
+            }
+        }]
+    """
+    result = []  # 初始化结果列表
+
+    try:
+        # 1. 获取用户比赛报名记录
+        user = User.query.get(user_id)
+        if not user or not user.race:
+            return []
+
+        # 2. 提取最近的比赛记录
+        sorted_races = sorted(
+            user.race,
+            key=lambda x: x['register_time'],
+            reverse=True
+        )[:limit]
+
+        # 3. 获取比赛详细信息
+        race_uids = [r['race_uid'] for r in sorted_races]
+        races_data = RaceData.query.filter(
+            RaceData.uid.in_(race_uids)
+        ).all()
+
+        # 4. 构建结果
+        for user_record in sorted_races:
+            # 找到对应的比赛详情
+            detail = next(
+                (rd for rd in races_data
+                 if str(rd.uid) == user_record['race_uid']),
+                None
+            )
+            if detail:
+                # 获取排名信息
+                ranking = None
+                rank_record = RaceRank.query.filter_by(
+                    user_id=user_id,
+                    contest_id=int(user_record['race_uid'])
+                ).first()
+
+                if rank_record:
+                    ranking = get_user_race_ranking(user_id, int(user_record['race_uid']))
+
+                race_entry = {
+                    "register_time": user_record['register_time'],
+                    "title": detail.title,
+                    "start_time": detail.start_time.strftime('%Y-%m-%d %H:%M:%S'),
+                    "end_time": detail.end_time.strftime('%Y-%m-%d %H:%M:%S'),
+                    "race_uid": user_record['race_uid'],
+                    "status": detail.status,
+                    "ranking": ranking  # 可能为None如果用户未参赛
+                }
+                result.append(race_entry)
+
+        return result
+
+    except Exception as e:
+        current_app.logger.error(f"获取用户比赛记录失败: {str(e)}")
+        return []  # 返回空列表而不是抛出异常，更友好
+
+
+def get_user_race_ranking(user_id, contest_id):
+    """
+    获取用户在指定比赛中的排名
+
+    参数:
+        user_id: 用户ID
+        contest_id: 比赛ID
+    返回:
+        {
+            "rank": 排名,
+            "total_solved": 解题数,
+            "total_penalty": 总罚时,
+            "problem_stats": 题目详情,
+            "total_participants": 总参赛人数
+        }
+    """
+    # 1. 获取该比赛的所有参赛者排名数据
+    all_ranks = RaceRank.query.filter_by(contest_id=contest_id).all()
+
+    # 2. 按规则排序
+    sorted_ranks = sorted(
+        all_ranks,
+        key=lambda x: (-x.total_solved, x.total_penalty)
+    )
+
+    # 3. 计算排名（考虑并列情况）
+    current_rank = 1
+    ranks = []
+    for i, rank in enumerate(sorted_ranks):
+        # 如果不是第一个，且与前一个成绩不同，则更新current_rank
+        if i > 0 and (
+                sorted_ranks[i - 1].total_solved != rank.total_solved or
+                sorted_ranks[i - 1].total_penalty != rank.total_penalty
+        ):
+            current_rank = i + 1
+
+        ranks.append({
+            "user_id": rank.user_id,
+            "rank": current_rank,
+            "total_solved": rank.total_solved,
+            "total_penalty": rank.total_penalty
+        })
+
+    # 4. 查找指定用户的排名
+    user_rank = next(
+        (r for r in ranks if r['user_id'] == user_id),
+        None
+    )
+
+    if not user_rank:
+        return None
+
+    # 5. 获取完整的用户排名信息
+    user_full_info = RaceRank.query.filter_by(
+        user_id=user_id,
+        contest_id=contest_id
+    ).first()
+
+    return {
+        "rank": user_rank['rank'],
+        "total_solved": user_rank['total_solved'],
+        "total_penalty": user_rank['total_penalty'],
+        "problem_stats": user_full_info.problem_stats,
+        "total_participants": len(sorted_ranks)
+    }

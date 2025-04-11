@@ -42,8 +42,9 @@ def judge_to_ai():
         prompt = request.form.get('prompt', None)
         question = request.form.get('question', None)
         user_id = getattr(g, 'current_user_id', None)
+        question_uid = request.form.get('question_uid', None)
 
-        return judge_question(prompt, question, user_id)
+        return judge_question(prompt, question, user_id, question_uid)
 
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 500

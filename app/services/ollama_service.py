@@ -1,8 +1,9 @@
 import requests
 import json
-
+from datetime import datetime
 from flask import jsonify
-
+from app import db
+from app.models import User
 from config import Config
 
 # 基础初始化设置
@@ -161,16 +162,72 @@ def generate_completion(prompt, model="deepseek-r1:32b"):
     return result
 
 
-def judge_question(prompt, question, user_id):
-    if prompt is None or question is None or user_id is None:
+def judge_question(prompt, question, user_id, question_uid):
+    if user_id is None:
         return jsonify({
             "success": False,
-            "message": "字段不能为空或者请先登录"
+            "message": "用户未登录"
+        })
+
+    if prompt is None or question is None or question_uid is None:
+        return jsonify({
+            "success": False,
+            "message": "字段不能为空"
         })
 
     result = generate_completion(explain2 + judge_prompt + question_start + question + question_end + prompt)
 
+    result = result[-4:]
+    if result == "答案正确":
+        add_question_record(user_id, question_uid, True)
+    else:
+        add_question_record(user_id, question_uid, False)
+
     return jsonify({
         "success": True,
-        "message": result[-4:]
+        "message": result
     })
+
+
+def add_question_record(user_id, question_uid, is_passed):
+    try:
+        user = User.query.get(user_id)
+        if not user:
+            raise ValueError("用户不存在")
+
+        # 初始化
+        if user.questions is None:
+            user.questions = []
+
+        # 查找是否已有该题目的记录
+        existing_index = None
+        for i, record in enumerate(user.questions):
+            if record["question_uid"] == question_uid:
+                existing_index = i
+                break
+
+        # 准备记录数据
+        new_record = {
+            "question_uid": question_uid,
+            "submit_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "is_passed": is_passed
+        }
+
+        # 更新或追加
+        if existing_index is not None:
+            # 合并新旧记录（保留可能存在的其他字段）
+            user.questions[existing_index].update(new_record)
+        else:
+            user.questions.append(new_record)
+
+        # 标记变更并提交
+        from sqlalchemy.orm.attributes import flag_modified
+        flag_modified(user, "questions")
+        db.session.commit()
+
+        return True
+
+    except Exception as e:
+        db.session.rollback()
+        print(f"发生错误: {str(e)}")
+        raise

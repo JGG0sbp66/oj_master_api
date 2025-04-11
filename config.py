@@ -39,7 +39,7 @@ class Config:
         "host": "smtp.163.com",
         "port": 465,
         "user": "oj_master@163.com",
-        "password": "smtp密钥"
+        "password": "SMTP密钥"
     }
     REDIS_CONFIG = {
         "host": "localhost",

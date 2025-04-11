@@ -1,7 +1,6 @@
 from .extensions import db
 from datetime import datetime
 
-
 class User(db.Model):
     __tablename__ = 'user_data'
 
@@ -10,6 +9,8 @@ class User(db.Model):
     password = db.Column(db.String(120), nullable=False)
     email = db.Column(db.String(120), nullable=False)
     role = db.Column(db.String(20), default='user')
+    questions = db.Column(db.JSON, nullable=True)
+    race = db.Column(db.JSON, nullable=True)
 
 
 class QuestionsData(db.Model):

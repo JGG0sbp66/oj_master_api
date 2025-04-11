@@ -81,8 +81,6 @@ def verify_email_code(email, user_code):
     try:
         # 统一处理Redis返回的bytes/str类型（兼容不同Redis版本）
         stored_code = r.get(f"verify_code:{email}")
-        if stored_code is None:
-            return jsonify({"success": False, "message": "验证码已过期或未发送"}), 400
 
         # 类型安全比对（自动处理bytes或str）
         if isinstance(stored_code, bytes):

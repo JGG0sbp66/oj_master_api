@@ -42,7 +42,7 @@ def create_app(config_class='config.Config'):
     app.permanent_session_lifetime = app.config['PERMANENT_SESSION_LIFETIME']
 
     # 配置日志
-    handler = RotatingFileHandler('app.log', maxBytes=10000, backupCount=3)
+    handler = RotatingFileHandler('app.log', maxBytes=10000, backupCount=3, encoding='utf-8')
     handler.setFormatter(logging.Formatter(
         '[%(asctime)s] %(levelname)s in %(module)s: %(message)s'
     ))

@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify, current_app
-from ..services.auth_service import register_user, login_user, logout_user
+from ..services.auth_service import register_user, login_user, logout_user, repassword_user
 from ..services.turnstile_service import check_cf_token, generate_code, send_verification_email, save_code_to_redis, \
     verify_email_code
 from ..utils.validators import validate_credentials
@@ -50,6 +50,25 @@ def login():
     # 调用服务层处理登录逻辑
     return login_user(username, password)
 
+
+@auth_bp.route('/repassword', methods=['POST'])
+def repassword():
+    data = request.get_json()
+    if not data:
+        return jsonify({"success": False, "message": "请求数据必须是 JSON 格式"}), 400
+
+    username = data.get('username', '').strip()
+    email = data.get('email', '').strip()
+    email_code = data.get('email_code', '').strip()
+    password = data.get('password', '').strip()
+
+    if not all([username, email, email_code]):
+        return jsonify({
+            'success': False,
+            'message': '请填写所有字段'
+        }), 400
+
+    return repassword_user(username, email, email_code, password)
 
 @auth_bp.route('/verify-token', methods=['GET'])
 def verify_token():

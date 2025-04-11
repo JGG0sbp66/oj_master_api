@@ -120,6 +120,67 @@ def login_user(username, password):
         return jsonify({'success': False, 'message': f'登录失败: {str(e)}'}), 500
 
 
+def repassword_user(username, email, email_code, new_password):
+    # 验证邮箱验证码
+    try:
+        response = requests.post(
+            "http://localhost:5000/api/verify-email-code",
+            json={"email": email, "code": email_code},
+            headers={"Content-Type": "application/json"}
+        )
+        email_code_result = response.json()
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'验证码服务异常: {str(e)}'
+        }), 500
+
+    if not email_code_result.get('success'):
+        return jsonify({
+            'success': False,
+            'message': '邮箱验证码错误'
+        }), 403
+
+    # 检查用户名是否存在
+    user = User.query.filter_by(username=username).first()
+    if not user:
+        return jsonify({
+            'success': False,
+            'message': '用户名不存在，请先注册'
+        }), 400
+
+    # 验证邮箱是否匹配
+    if user.email != email:
+        return jsonify({
+            'success': False,
+            'message': '邮箱与用户名不匹配'
+        }), 400
+
+    # 密码哈希处理
+    try:
+        hashed_password = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt())
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'密码加密失败: {str(e)}'
+        }), 500
+
+    # 更新密码
+    try:
+        user.password = hashed_password.decode('utf-8')
+        db.session.commit()
+        return jsonify({
+            'success': True,
+            'message': '密码重置成功!'
+        })
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            'success': False,
+            'message': f'密码重置失败: {str(e)}'
+        }), 500
+
+
 def logout_user():
     """处理用户退出登录"""
     # 创建响应对象

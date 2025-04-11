@@ -20,12 +20,7 @@
             padding: 40px;
             background: white;
             border-radius: 16px;
-            box-shadow: 0 8px 30px rgba(0,0,0,0.1);
-            transition: transform 0.3s ease;
-        }
-
-        .container:hover {
-            transform: translateY(-3px);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
         }
 
         .header {
@@ -47,6 +42,11 @@
             border-radius: 2px;
         }
 
+        .code-container {
+            margin: 30px auto;
+            text-align: center;
+        }
+
         .code {
             letter-spacing: 5px;
             font-size: 42px;
@@ -55,15 +55,30 @@
             color: white;
             padding: 20px 40px;
             border-radius: 12px;
-            margin: 30px auto;
-            display: inline-block;
-            box-shadow: 0 4px 20px rgba(106,90,205,0.2);
-            animation: codePop 0.6s cubic-bezier(0.22, 0.61, 0.36, 1);
+            box-shadow: 0 4px 20px rgba(106, 90, 205, 0.2);
+            cursor: pointer;
+            user-select: all;
+            -webkit-user-select: all;
+            -moz-user-select: all;
+            -ms-user-select: all;
+            transition: transform 0.2s, box-shadow 0.2s;
         }
 
-        @keyframes codePop {
-            0% { opacity: 0; transform: scale(0.8); }
-            100% { opacity: 1; transform: scale(1); }
+        .code:hover {
+            transform: scale(1.02);
+            box-shadow: 0 6px 25px rgba(106, 90, 205, 0.3);
+        }
+
+        .code:active {
+            transform: scale(0.98);
+        }
+
+        .copy-hint {
+            text-align: center;
+            color: #7f8c8d;
+            font-size: 14px;
+            margin-top: 8px;
+            height: 20px;
         }
 
         .security-tip {
@@ -81,6 +96,10 @@
             fill: #4a90e2;
         }
 
+        .end {
+            text-align: right;
+        }
+
         .footer {
             margin-top: 40px;
             padding-top: 25px;
@@ -95,35 +114,51 @@
                 padding: 25px;
                 margin: 20px;
             }
+
             .code {
                 font-size: 32px;
                 padding: 15px 30px;
+            }
+
+            .copy-hint::before {
+                content: "长按验证码选择「复制」";
+            }
+        }
+
+        @media (min-width: 641px) {
+            .copy-hint::before {
+                content: "点击验证码后按 Ctrl+C 复制";
             }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">OJ_Master 验证码</div>
+<div class="container">
+    <div class="header">OJ_Master 验证码</div>
 
-        <p>感谢您注册OJ_Master平台，请使用以下验证码完成身份验证：</p>
+    <p>感谢您注册OJ_Master平台，请使用以下验证码完成身份验证：</p>
 
-        <div class="security-tip">
-            <svg class="shield-icon" viewBox="0 0 24 24">
-                <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/>
-            </svg>
-            <span>安全提示：该验证码用于身份验证，请勿泄露给他人</span>
-        </div>
-
-        <div class="code">${verification_code}</div>
-
-        <p>验证码将在 <strong style="color:#e67e22;">5分钟</strong> 后失效，请及时完成验证。</p>
-        <p>如非本人操作，请立即忽略此邮件。</p>
-
-        <div class="footer">
-            <p>系统自动发送，请勿直接回复</p>
-            <p>© 2025 OJ_Master 所谓混学团队</p>
-        </div>
+    <div class="security-tip">
+        <svg class="shield-icon" viewBox="0 0 24 24">
+            <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/>
+        </svg>
+        <span>安全提示：该验证码用于身份验证，请勿泄露给他人</span>
     </div>
+
+    <div class="code-container">
+        <div class="code">${verification_code}</div>
+        <div class="copy-hint"></div>
+    </div>
+
+    <div class="end">
+        <p>验证码将在 <strong style="color:#e67e22;">5分钟</strong> 后失效，请及时完成验证</p>
+        <p>如非本人操作，请忽略此邮件</p>
+    </div>
+
+    <div class="footer">
+        <p>系统自动发送，请勿直接回复</p>
+        <p>© 2025 OJ_Master 所谓混学团队</p>
+    </div>
+</div>
 </body>
 </html>

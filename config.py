@@ -17,7 +17,7 @@ class Config:
     PERMANENT_SESSION_LIFETIME = timedelta(minutes=30)
 
     # Turnstile 验证配置
-    TURNSTILE_SECRET_KEY = "cloud flare 密钥"
+    TURNSTILE_SECRET_KEY = "cloudfare 验证码密钥"
 
     # 角色权限定义
     ROLES = {

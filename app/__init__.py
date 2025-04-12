@@ -1,10 +1,12 @@
 # app/__init__.py
 from flask import Flask
 from flask_cors import CORS
+from flask_restx import Api
 from .extensions import db
 import logging
 from logging.handlers import RotatingFileHandler
 
+api = Api(version="1.0", title="Reborn OJ Master API", description="OJ Master API文档", doc="/oj-master/api")
 
 def create_app(config_class='config.Config'):
     app = Flask(__name__)
@@ -24,18 +26,21 @@ def create_app(config_class='config.Config'):
         }
     )
 
+    # 初始化扩展
+    api.init_app(app)
+
     # 延迟导入蓝图
     from .routes.auth import auth_bp
     from .routes.questions import questions_bp
     from .routes.race import race_bp
-    from .routes.admin_routes.admin_api_test import admin_test_bp
+    from .routes.admin_routes.admin_api_test import admin_ns
     from .routes.user_routes.user_info import user_info_bp
     from .routes.askAi import askAi_bp
 
     app.register_blueprint(auth_bp, url_prefix='/api')
     app.register_blueprint(questions_bp, url_prefix='/api')
     app.register_blueprint(race_bp, url_prefix='/api')
-    app.register_blueprint(admin_test_bp, url_prefix='/api')
+    api.add_namespace(admin_ns)
     app.register_blueprint(user_info_bp, url_prefix='/api')
     app.register_blueprint(askAi_bp, url_prefix='/api')
 

@@ -1,6 +1,7 @@
 from flask import jsonify
 from ..models import RaceData, QuestionsData, UserQuestionStatus, RaceRank
 
+
 def get_race_info(race_id, user_id=None):
     """获取比赛信息（支持游客模式）"""
     race = RaceData.query.filter_by(uid=race_id).first()
@@ -63,6 +64,7 @@ def get_race_info(race_id, user_id=None):
         }
     })
 
+
 def get_race_list():
     query = RaceData.query
 
@@ -84,6 +86,7 @@ def get_race_list():
     return jsonify({
         "race_info": race_list
     })
+
 
 def get_race_rank(race_id):
     query = RaceRank.query

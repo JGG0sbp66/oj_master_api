@@ -1,15 +1,27 @@
-from flask import Blueprint, make_response, jsonify
-
+from flask_restx import Namespace, Resource
+from app import api  # 从主模块导入api实例
 from app.utils.role_utils import role_required
 
-admin_test_bp = Blueprint('admin_test', __name__)
+# 创建命名空间
+admin_ns = api.namespace('Admin', description='管理员接口', path='/api')
 
 
-@admin_test_bp.route('/admin-dashboard', methods=['GET'])
-@role_required('admin')  # 只允许admin访问
-def admin_dashboard():
-    response = make_response(jsonify({
-        'success': True,
-        'message': 'IM ADMIN'
-    }))
-    return response
+@admin_ns.route('/admin-dashboard')
+class AdminDashboard(Resource):
+    @admin_ns.doc(security='Bearer')  # 声明需要认证
+    # @role_required('admin')  # 自定义权限装饰器
+    def get(self):
+        """管理员仪表盘 (GET请求)"""
+        return {
+            'success': True,
+            'message': 'IM ADMIN'
+        }
+
+    @admin_ns.doc(security='Bearer')
+    # @role_required('admin')
+    def post(self):
+        """管理员仪表盘 (POST请求)"""
+        return {
+            'success': True,
+            'message': 'POST操作成功'
+        }

@@ -1,7 +1,6 @@
 import requests
 import json
 from datetime import datetime
-from flask import jsonify
 from app import db
 from app.models import User
 from config import Config
@@ -103,7 +102,6 @@ def generate_completion_stream(prompt, model="gemma3:27b"):
                 try:
                     chunk = json.loads(line.decode('utf-8'))
                     if 'response' in chunk:
-                        # SSE格式：data: {json}\n\n
                         yield f"data: {json.dumps({'text': chunk['response']})}\n\n"
                     if chunk.get('done'):
                         break
@@ -164,29 +162,35 @@ def generate_completion(prompt, model="deepseek-r1:32b"):
 
 def judge_question(prompt, question, user_id, question_uid):
     if user_id is None:
-        return jsonify({
+        return {
             "success": False,
             "message": "用户未登录"
-        })
+        }, 401
 
-    if prompt is None or question is None or question_uid is None:
-        return jsonify({
+    if not all([prompt, question, question_uid]):
+        return {
             "success": False,
             "message": "字段不能为空"
-        })
+        }, 400
 
-    result = generate_completion(explain2 + judge_prompt + question_start + question + question_end + prompt)
+    try:
+        result = generate_completion(explain2 + judge_prompt + question_start + question + question_end + prompt)
+        result = result[-4:]
 
-    result = result[-4:]
-    if result == "答案正确":
-        add_question_record(user_id, question_uid, True)
-    else:
-        add_question_record(user_id, question_uid, False)
+        if result == "答案正确":
+            add_question_record(user_id, question_uid, True)
+        else:
+            add_question_record(user_id, question_uid, False)
 
-    return jsonify({
-        "success": True,
-        "message": result
-    })
+        return {
+            "success": True,
+            "message": result
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "message": f"判题过程中发生错误: {str(e)}"
+        }, 500
 
 
 def add_question_record(user_id, question_uid, is_passed):
@@ -215,7 +219,6 @@ def add_question_record(user_id, question_uid, is_passed):
 
         # 更新或追加
         if existing_index is not None:
-            # 合并新旧记录（保留可能存在的其他字段）
             user.questions[existing_index].update(new_record)
         else:
             user.questions.append(new_record)
@@ -226,8 +229,6 @@ def add_question_record(user_id, question_uid, is_passed):
         db.session.commit()
 
         return True
-
     except Exception as e:
         db.session.rollback()
-        print(f"发生错误: {str(e)}")
-        raise
+        raise e

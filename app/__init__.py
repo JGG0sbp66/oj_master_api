@@ -8,6 +8,7 @@ from logging.handlers import RotatingFileHandler
 
 api = Api(version="1.0", title="Reborn OJ Master API", description="OJ Master API文档", doc="/oj-master/api")
 
+
 def create_app(config_class='config.Config'):
     app = Flask(__name__)
     app.config.from_object(config_class)
@@ -30,19 +31,19 @@ def create_app(config_class='config.Config'):
     api.init_app(app)
 
     # 延迟导入蓝图
-    from .routes.auth import auth_bp
-    from .routes.questions import questions_bp
-    from .routes.race import race_bp
+    from .routes.auth import auth_ns
+    from .routes.questions import questions_ns
+    from .routes.race import race_ns
     from .routes.admin_routes.admin_api_test import admin_ns
-    from .routes.user_routes.user_info import user_info_bp
-    from .routes.askAi import askAi_bp
+    from .routes.user_routes.user_info import user_info_ns
+    from .routes.askAi import ai_ns
 
-    app.register_blueprint(auth_bp, url_prefix='/api')
-    app.register_blueprint(questions_bp, url_prefix='/api')
-    app.register_blueprint(race_bp, url_prefix='/api')
+    api.add_namespace(auth_ns)
+    api.add_namespace(questions_ns)
+    api.add_namespace(race_ns)
     api.add_namespace(admin_ns)
-    app.register_blueprint(user_info_bp, url_prefix='/api')
-    app.register_blueprint(askAi_bp, url_prefix='/api')
+    api.add_namespace(user_info_ns)
+    api.add_namespace(ai_ns)
 
     app.permanent_session_lifetime = app.config['PERMANENT_SESSION_LIFETIME']
 

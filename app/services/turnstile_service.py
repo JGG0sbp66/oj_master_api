@@ -2,7 +2,6 @@ import smtplib
 from email.mime.text import MIMEText
 from config import Config
 import requests, random, string, redis
-from flask import jsonify
 from flask import current_app as app
 from email.mime.multipart import MIMEMultipart
 from ..utils.validators import render_email_template
@@ -11,7 +10,7 @@ from ..utils.validators import render_email_template
 def check_cf_token(token_data):
     token = token_data.get('cfToken')
     if not token:
-        return jsonify({"success": False, "error": "cfToken不能为空"}), 400
+        return {"success": False, "error": "cfToken不能为空"}, 400
 
     # 使用 current_app 获取配置
     response = requests.post(
@@ -24,13 +23,13 @@ def check_cf_token(token_data):
     result = response.json()
 
     if result.get("success"):
-        return jsonify({"success": True, "message": "验证成功"})
+        return {"success": True, "message": "验证成功"}, 200
     else:
-        return jsonify({
+        return {
             "success": False,
             "error": "cfToken验证失败",
             "codes": result.get("error-codes", [])
-        }), 400
+        }, 400
 
 
 # 生成随机验证码
@@ -88,9 +87,9 @@ def verify_email_code(email, user_code):
 
         if stored_code == user_code:
             r.delete(f"verify_code:{email}")
-            return jsonify({"success": True, "message": "验证码正确"})
+            return {"success": True, "message": "验证码正确"}, 200
         else:
-            return jsonify({"success": False, "message": "验证码错误"}), 400
+            return {"success": False, "message": "验证码错误"}, 400
     except Exception as e:
         print(f"验证码校验异常: {e}")
-        return jsonify({"success": False, "message": "服务器错误"}), 500
+        return {"success": False, "message": "服务器错误"}, 500

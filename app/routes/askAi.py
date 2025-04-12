@@ -1,50 +1,84 @@
-from flask import Blueprint, request, jsonify, g
-from flask import Response, stream_with_context
-from ..services.ollama_service import generate_completion_stream, judge_question
-from ..utils.role_utils import optional_login
+from flask_restx import Resource, fields
+from flask import request, Response, stream_with_context, g
+from app import api  # 从主模块导入api实例
+from app.services.ollama_service import generate_completion_stream, judge_question
+from app.utils.role_utils import optional_login
 
-askAi_bp = Blueprint('askAi', __name__)
+# 创建 AI 相关接口命名空间
+ai_ns = api.namespace('AI', description='AI 相关接口', path='/api')
 
+# 模型定义
+ai_message_model = api.model('AIMessage', {
+    'prompt': fields.String(required=True, description='用户输入的提示词')
+})
 
-@askAi_bp.route('/askAi-msg', methods=['POST'])
-def stream_to_ai():
-    try:
-        data = request.get_json()
-        prompt = data.get('prompt')
-
-        if not prompt:
-            return jsonify({"success": False, "message": "内容不能为空"}), 400
-
-        # 流式响应
-        return Response(
-            stream_with_context(generate_completion_stream(prompt)),
-            mimetype='text/event-stream',
-            headers={
-                'Cache-Control': 'no-cache',
-                'Connection': 'keep-alive',
-                'X-Accel-Buffering': 'no'  # 禁用Nginx缓冲
-            }
-        )
-
-    except Exception as e:
-        return jsonify({"success": False, "message": str(e)}), 500
+ai_judge_model = api.model('AIJudge', {
+    'prompt': fields.String(description='额外的提示词', required=False),
+    'question': fields.String(required=True, description='要评判的问题'),
+    'question_uid': fields.String(description='问题唯一标识', required=False)
+})
 
 
-@askAi_bp.route('/askAi-question', methods=['POST'])
-@optional_login
-def judge_to_ai():
-    try:
-        # data = request.get_json()
-        # prompt = data.get('prompt', None)
-        # question = str(data.get('question', None))
-        # user_id = getattr(g, 'current_user_id', None)
+@ai_ns.route('/askAi-msg')
+class AIMessage(Resource):
+    @ai_ns.doc(description='与AI对话（流式响应）')
+    @ai_ns.expect(ai_message_model)
+    def post(self):
+        """
+        与AI对话（流式响应）
 
-        prompt = request.form.get('prompt', None)
-        question = request.form.get('question', None)
-        user_id = getattr(g, 'current_user_id', None)
-        question_uid = request.form.get('question_uid', None)
+        返回流式响应，用于实时显示AI生成的内容
+        """
+        try:
+            data = request.get_json()
+            prompt = data.get('prompt')
 
-        return judge_question(prompt, question, user_id, question_uid)
+            if not prompt:
+                return {
+                    "success": False,
+                    "message": "内容不能为空"
+                }, 400
 
-    except Exception as e:
-        return jsonify({"success": False, "message": str(e)}), 500
+            # 流式响应
+            return Response(
+                stream_with_context(generate_completion_stream(prompt)),
+                mimetype='text/event-stream',
+                headers={
+                    'Cache-Control': 'no-cache',
+                    'Connection': 'keep-alive',
+                    'X-Accel-Buffering': 'no'  # 禁用Nginx缓冲
+                }
+            )
+
+        except Exception as e:
+            return {
+                "success": False,
+                "message": str(e)
+            }, 500
+
+
+@ai_ns.route('/askAi-question')
+class AIJudge(Resource):
+    @ai_ns.doc(security='Bearer', description='AI评判问题')
+    @ai_ns.expect(ai_judge_model)
+    @optional_login
+    def post(self):
+        """
+        AI评判问题
+
+        使用AI对问题进行评判和分析
+        """
+        try:
+            # 使用form-data格式接收数据
+            prompt = request.form.get('prompt', None)
+            question = request.form.get('question', None)
+            user_id = getattr(g, 'current_user_id', None)
+            question_uid = request.form.get('question_uid', None)
+
+            return judge_question(prompt, question, user_id, question_uid)
+
+        except Exception as e:
+            return {
+                "success": False,
+                "message": str(e)
+            }, 500

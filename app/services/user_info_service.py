@@ -1,5 +1,5 @@
 import bcrypt
-from flask import send_from_directory, jsonify, current_app
+from flask import send_from_directory, current_app
 from ..extensions import db
 from app.models import User, QuestionsData, RaceRank, RaceData
 from app.utils.validators import is_safe_filename
@@ -11,7 +11,7 @@ def get_avatar_service(user_id):
     """支持多格式的头像获取服务"""
     # 检查默认头像是否存在
     if not os.path.exists(os.path.join(Config.AVATAR_UPLOAD_DIR, Config.DEFAULT_AVATAR)):
-        return jsonify({"success": False, "message": "默认头像不存在"}), 404
+        return {"success": False, "message": "默认头像不存在"}, 404
 
     # 用户未登录/未指定用户ID时返回默认头像
     if user_id is None:
@@ -25,7 +25,7 @@ def get_avatar_service(user_id):
 def send_avatar_file(filename):
     """安全发送头像文件"""
     if not is_safe_filename(filename):
-        return jsonify({"success": False, "message": "非法文件名"}), 400
+        return {"success": False, "message": "非法文件名"}, 400
 
     try:
         return send_from_directory(
@@ -34,7 +34,7 @@ def send_avatar_file(filename):
             max_age=3600
         )
     except FileNotFoundError:
-        return jsonify({"success": False, "message": "头像文件不存在"}), 404
+        return {"success": False, "message": "头像文件不存在"}, 404
 
 
 def find_user_avatar(user_id):
@@ -271,59 +271,59 @@ def get_user_race_ranking(user_id, contest_id):
 def to_chance_password(user_id, old_password, new_password, re_new_password):
     # 1. 参数校验
     if not all([user_id, old_password, new_password, re_new_password]):
-        return jsonify({
+        return {
             "success": False,
             "message": "参数错误"
-        })
+        }
 
     # 2. 用户存在性检查
     user = User.query.get(user_id)
     if not user:
-        return jsonify({
+        return {
             "success": False,
             "message": "用户不存在"
-        })
+        }
 
     # 3. 旧密码验证
     try:
         if not bcrypt.checkpw(old_password.encode('utf-8'), user.password.encode('utf-8')):
-            return jsonify({
+            return {
                 "success": False,
                 "message": "旧密码错误"
-            }), 401
+            }, 401
     except Exception as e:
-        return jsonify({
+        return {
             "success": False,
             "message": f"密码验证失败: {str(e)}"
-        }), 500
+        }, 500
 
     # 4. 新密码一致性检查
     if new_password != re_new_password:
-        return jsonify({
+        return {
             "success": False,
             "message": "新密码不一致"
-        }), 400
+        }, 400
 
     # 5. 新密码哈希处理
     try:
         hashed_password = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt())
     except Exception as e:
-        return jsonify({
+        return {
             "success": False,
             "message": f"密码加密失败: {str(e)}"
-        }), 500
+        }, 500
 
     # 6. 更新密码
     try:
         user.password = hashed_password.decode('utf-8')
         db.session.commit()
-        return jsonify({
+        return {
             "success": True,
             "message": "密码修改成功"
-        })
+        }
     except Exception as e:
         db.session.rollback()
-        return jsonify({
+        return {
             "success": False,
             "message": f"密码修改失败: {str(e)}"
-        }), 500
+        }, 500

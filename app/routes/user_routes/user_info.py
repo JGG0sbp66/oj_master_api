@@ -1,5 +1,5 @@
 from flask import Blueprint, jsonify, g, request
-
+from app.services.use_info_service import to_chance_password
 from app.services.use_info_service import get_avatar_service, save_avatar, get_user_questions, get_user_race
 from app.utils.role_utils import optional_login
 
@@ -90,4 +90,27 @@ def user_race():
         return jsonify({
             "success": False,
             "message": f"获取用户比赛失败: {str(e)}"
+        }), 500
+
+
+@user_info_bp.route('/user-change-password', methods=['POST'])
+@optional_login
+def change_password():
+    try:
+        user_id = getattr(g, 'current_user_id', None)
+        old_password = request.json.get('old_password')
+        new_password = request.json.get('new_password')
+        re_new_password = request.json.get('re_new_password')
+        if user_id is None:
+            return jsonify({
+                "success": False,
+                "message": "无效的用户"
+            }), 401
+
+        return to_chance_password(user_id, old_password, new_password, re_new_password)
+
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "message": f"修改密码失败: {str(e)}"
         }), 500

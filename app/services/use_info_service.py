@@ -1,5 +1,6 @@
+import bcrypt
 from flask import send_from_directory, jsonify, current_app
-
+from ..extensions import db
 from app.models import User, QuestionsData, RaceRank, RaceData
 from app.utils.validators import is_safe_filename
 from config import Config
@@ -265,3 +266,64 @@ def get_user_race_ranking(user_id, contest_id):
         "problem_stats": user_full_info.problem_stats,
         "total_participants": len(sorted_ranks)
     }
+
+
+def to_chance_password(user_id, old_password, new_password, re_new_password):
+    # 1. 参数校验
+    if not all([user_id, old_password, new_password, re_new_password]):
+        return jsonify({
+            "success": False,
+            "message": "参数错误"
+        })
+
+    # 2. 用户存在性检查
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({
+            "success": False,
+            "message": "用户不存在"
+        })
+
+    # 3. 旧密码验证
+    try:
+        if not bcrypt.checkpw(old_password.encode('utf-8'), user.password.encode('utf-8')):
+            return jsonify({
+                "success": False,
+                "message": "旧密码错误"
+            }), 401
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "message": f"密码验证失败: {str(e)}"
+        }), 500
+
+    # 4. 新密码一致性检查
+    if new_password != re_new_password:
+        return jsonify({
+            "success": False,
+            "message": "新密码不一致"
+        }), 400
+
+    # 5. 新密码哈希处理
+    try:
+        hashed_password = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt())
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "message": f"密码加密失败: {str(e)}"
+        }), 500
+
+    # 6. 更新密码
+    try:
+        user.password = hashed_password.decode('utf-8')
+        db.session.commit()
+        return jsonify({
+            "success": True,
+            "message": "密码修改成功"
+        })
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            "success": False,
+            "message": f"密码修改失败: {str(e)}"
+        }), 500

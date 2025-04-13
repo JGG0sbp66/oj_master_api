@@ -22,7 +22,7 @@ def create_app(config_class='config.Config'):
                 "origins": ["http://localhost:5173"],  # 明确指定前端地址
                 "supports_credentials": True,  # 允许带凭证
                 "allow_headers": ["Content-Type", "Authorization"],
-                "methods": ["GET", "POST", "OPTIONS"]
+                "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
             }
         }
     )

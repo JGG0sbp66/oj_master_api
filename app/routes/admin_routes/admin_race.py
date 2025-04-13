@@ -5,7 +5,7 @@ from app.models import RaceData
 from app.utils.role_utils import role_required
 
 # 创建命名空间
-admin_ns = api.namespace('Admin', description='管理员接口', path='/api')
+admin_ns = api.namespace('Admin-Race', description='比赛管理接口', path='/api')
 
 # 定义数据模型
 

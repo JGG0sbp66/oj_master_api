@@ -1,0 +1,17 @@
+# .gitignore
+# Python 相关
+.env
+*.pyc
+__pycache__/
+venv/
+
+# 配置文件/敏感数据
+config_secret.py
+secrets/
+
+# 开发工具生成的文件
+.idea/
+.vscode/
+
+# 日志
+*.log

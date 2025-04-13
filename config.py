@@ -1,6 +1,9 @@
 # config.py
 import os
 from datetime import timedelta
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 class Config:
@@ -17,7 +20,7 @@ class Config:
     PERMANENT_SESSION_LIFETIME = timedelta(minutes=30)
 
     # Turnstile 验证配置
-    TURNSTILE_SECRET_KEY = "cloudfare 验证码密钥"
+    TURNSTILE_SECRET_KEY = os.environ.get('TURNSTILE_SECRET_KEY')
 
     # 角色权限定义
     ROLES = {
@@ -39,7 +42,7 @@ class Config:
         "host": "smtp.163.com",
         "port": 465,
         "user": "oj_master@163.com",
-        "password": "SMTP密钥"
+        "password": os.environ.get('SMTP_PASSWORD')
     }
     REDIS_CONFIG = {
         "host": "localhost",

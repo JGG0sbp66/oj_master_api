@@ -34,7 +34,8 @@ def create_app(config_class='config.Config'):
     from .routes.auth import auth_ns
     from .routes.questions import questions_ns
     from .routes.race import race_ns
-    from .routes.admin_routes.admin_api_test import admin_ns
+    from .routes.admin_routes.admin_race import admin_ns
+    from .routes.admin_routes.admin_question import admin_questions_ns
     from .routes.user_routes.user_info import user_info_ns
     from .routes.askAi import ai_ns
 
@@ -42,6 +43,7 @@ def create_app(config_class='config.Config'):
     api.add_namespace(questions_ns)
     api.add_namespace(race_ns)
     api.add_namespace(admin_ns)
+    api.add_namespace(questions_ns)
     api.add_namespace(user_info_ns)
     api.add_namespace(ai_ns)
 

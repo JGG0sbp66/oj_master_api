@@ -56,3 +56,10 @@ def render_email_template(template_name: str, **kwargs) -> str:
     defaults.update(kwargs)
 
     return template.substitute(defaults)
+
+
+class BusinessException(Exception):
+    def __init__(self, message, status_code=400):
+        super().__init__(message)
+        self.status_code = status_code
+        self.message = message

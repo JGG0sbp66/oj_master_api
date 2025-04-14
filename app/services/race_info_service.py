@@ -1,4 +1,8 @@
-from ..models import RaceData, QuestionsData, UserQuestionStatus, RaceRank
+from datetime import datetime
+
+from .. import db
+from ..models import RaceData, QuestionsData, UserQuestionStatus, RaceRank, User
+from ..utils.validators import BusinessException
 
 
 def get_race_info(race_id, user_id=None):
@@ -105,3 +109,71 @@ def get_race_rank(race_id):
     return {
         "race_rank": race_rank_list
     }
+
+
+def register_race(user_id, race_uid):
+    """
+    比赛报名服务
+    :param user_id: 用户ID
+    :param race_uid: 比赛ID
+    :return: 报名结果
+    :raises: BusinessException
+    """
+    # 1. 验证用户是否存在
+    user = User.query.get(user_id)
+    if not user:
+        raise BusinessException("用户不存在", 404)
+
+    # 2. 验证比赛是否存在
+    race = RaceData.query.get(race_uid)
+    if not race:
+        raise BusinessException("比赛不存在", 404)
+
+    # 3. 检查是否已报名
+    user_races = user.race or []
+    if any(str(r.get('race_uid')) == str(race_uid) for r in user_races):  # 添加类型转换
+        raise BusinessException("您已经报名过该比赛", 400)
+
+    # 4. 检查比赛是否已开始
+    if datetime.utcnow() > race.start_time:
+        raise BusinessException("比赛已开始，不能报名", 400)
+
+    # 5. 更新用户数据 - 关键修正点
+    new_race_entry = {
+        "race_uid": race_uid,  # 保持与数据库一致的类型
+        "register_time": datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
+    }
+
+    # 正确更新JSON字段的方法
+    if user.race is None:
+        user.race = [new_race_entry]
+    else:
+        # 创建全新的列表对象确保SQLAlchemy检测到变更
+        updated_races = list(user.race)
+        updated_races.append(new_race_entry)
+        user.race = updated_races
+
+    # 6. 更新比赛数据
+    if race.user_list is None:
+        race.user_list = [user_id]
+    else:
+        # 同样确保创建新列表
+        updated_users = list(race.user_list)
+        if user_id not in updated_users:
+            updated_users.append(user_id)
+            race.user_list = updated_users
+
+    # 7. 提交事务
+    try:
+        db.session.commit()
+        return {
+            "success": True,
+            "message": "报名成功",
+            "data": {
+                "race_uid": race_uid,
+                "register_time": new_race_entry['register_time']
+            }
+        }
+    except Exception as e:
+        db.session.rollback()
+        raise BusinessException(f"数据库操作失败: {str(e)}", 500)

@@ -1,8 +1,9 @@
-from flask_restx import Namespace, Resource, fields
+from flask_restx import Resource, fields
 from flask import request, g
-from app import api
-from app.services.race_info_service import get_race_info, get_race_list, get_race_rank
+from app import api, db
+from app.services.race_info_service import get_race_info, get_race_list, get_race_rank, register_race
 from app.utils.role_utils import optional_login
+from app.utils.validators import BusinessException
 
 # 创建比赛信息命名空间
 race_ns = api.namespace('Race', description='比赛信息接口', path='/api')
@@ -14,6 +15,10 @@ race_info_model = race_ns.model('RaceInfo', {
 
 race_rank_model = race_ns.model('RaceRank', {
     'uid': fields.String(required=True, description='比赛UID')
+})
+
+race_register_model = race_ns.model('RaceRegister', {
+    'race_uid': fields.Integer(required=True, description='比赛ID', example=1)
 })
 
 
@@ -61,3 +66,34 @@ class RaceRank(Resource):
 
         race_uid = data.get('uid', '')
         return get_race_rank(race_uid)
+
+
+# 添加报名接口
+@race_ns.route('/race-register')
+class RaceRegister(Resource):
+    @race_ns.doc(security='Bearer', description='比赛报名接口')
+    @race_ns.expect(race_register_model)
+    @optional_login
+    def post(self):
+        """比赛报名"""
+        try:
+            # 1. 获取当前用户ID
+            user_id = getattr(g, 'current_user_id', None)
+            if not user_id:
+                return {"success": False, "message": "请先登录"}, 401
+
+            # 2. 获取请求数据
+            data = request.get_json()
+            race_uid = data.get('race_uid')
+
+            if not race_uid:
+                return {"success": False, "message": "比赛ID不能为空"}, 400
+
+            # 3. 调用服务层
+            return register_race(user_id, race_uid)
+
+        except BusinessException as e:
+            return {"success": False, "message": e.message}, e.status_code
+        except Exception as e:
+            db.session.rollback()
+            return {"success": False, "message": f"报名过程中发生错误: {str(e)}"}, 500

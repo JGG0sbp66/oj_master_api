@@ -1,5 +1,7 @@
-from ..models import UserQuestionStatus, QuestionsData
+from .. import db
+from ..models import UserQuestionStatus, QuestionsData, User
 import math
+from datetime import datetime
 
 
 def get_question_status(user_id, question_id):
@@ -52,7 +54,7 @@ def get_questions(page, category, topic, textinput, user_id=None):
     # 文本搜索
     if textinput:
         query = query.filter(
-            QuestionsData.question['title'].astext.ilike(f"%{textinput}%")
+            db.func.json_extract(QuestionsData.question, '$.title').ilike(f"%{textinput}%")
         )
 
     # 获取分页结果
@@ -119,3 +121,83 @@ def get_question_detail(question_id):
         "print_text": question_json.get("output_format"),
         "examples": question_json.get("examples", [])
     }
+
+
+def add_question_record(user_id, question_uid, is_passed):
+    try:
+        user = User.query.get(user_id)
+        if not user:
+            raise ValueError("用户不存在")
+
+        # 初始化
+        if user.questions is None:
+            user.questions = []
+
+        # 查找是否已有该题目的记录
+        existing_index = None
+        for i, record in enumerate(user.questions):
+            if record["question_uid"] == question_uid:
+                existing_index = i
+                break
+
+        # 准备记录数据
+        new_record = {
+            "question_uid": question_uid,
+            "submit_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "is_passed": is_passed
+        }
+
+        # 更新或追加
+        if existing_index is not None:
+            user.questions[existing_index].update(new_record)
+        else:
+            user.questions.append(new_record)
+
+        # 标记变更并提交
+        from sqlalchemy.orm.attributes import flag_modified
+        flag_modified(user, "questions")
+        db.session.commit()
+
+        return True
+    except Exception as e:
+        db.session.rollback()
+        raise e
+
+
+def update_user_question_status(user_id, question_id, is_correct, race_id=0):
+    """
+    更新用户题目状态到数据库
+    :param user_id: 用户ID
+    :param question_id: 题目ID
+    :param is_correct: 答案是否正确
+    :param race_id: 比赛ID（默认为0表示题库）
+    """
+    # 检查是否已有记录
+    existing_record = UserQuestionStatus.query.filter_by(
+        user_id=user_id,
+        question_id=question_id,
+        race_id=race_id
+    ).first()
+
+    if existing_record:
+        # 更新已有记录
+        if is_correct:
+            existing_record.state = '已通过'
+            existing_record.solve = (existing_record.solve or 0) + 1
+        else:
+            if existing_record.state != '已通过':  # 如果已经是已通过状态则不再降级
+                existing_record.state = '未通过'
+        existing_record.submit = (existing_record.submit or 0) + 1
+    else:
+        # 创建新记录
+        new_record = UserQuestionStatus(
+            race_id=race_id,
+            user_id=user_id,
+            question_id=question_id,
+            state='已通过' if is_correct else '未通过',
+            submit=1,
+            solve=1 if is_correct else 0
+        )
+        db.session.add(new_record)
+
+    db.session.commit()

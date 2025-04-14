@@ -1,8 +1,6 @@
 import requests
 import json
-from datetime import datetime
-from app import db
-from app.models import User
+from app.services.questoin_service import update_user_question_status, add_question_record
 from config import Config
 
 # 基础初始化设置
@@ -179,8 +177,10 @@ def judge_question(prompt, question, user_id, question_uid):
 
         if result == "答案正确":
             add_question_record(user_id, question_uid, True)
+            update_user_question_status(user_id, question_uid, True)
         else:
             add_question_record(user_id, question_uid, False)
+            update_user_question_status(user_id, question_uid, False)
 
         return {
             "success": True,
@@ -191,44 +191,3 @@ def judge_question(prompt, question, user_id, question_uid):
             "success": False,
             "message": f"判题过程中发生错误: {str(e)}"
         }, 500
-
-
-def add_question_record(user_id, question_uid, is_passed):
-    try:
-        user = User.query.get(user_id)
-        if not user:
-            raise ValueError("用户不存在")
-
-        # 初始化
-        if user.questions is None:
-            user.questions = []
-
-        # 查找是否已有该题目的记录
-        existing_index = None
-        for i, record in enumerate(user.questions):
-            if record["question_uid"] == question_uid:
-                existing_index = i
-                break
-
-        # 准备记录数据
-        new_record = {
-            "question_uid": question_uid,
-            "submit_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            "is_passed": is_passed
-        }
-
-        # 更新或追加
-        if existing_index is not None:
-            user.questions[existing_index].update(new_record)
-        else:
-            user.questions.append(new_record)
-
-        # 标记变更并提交
-        from sqlalchemy.orm.attributes import flag_modified
-        flag_modified(user, "questions")
-        db.session.commit()
-
-        return True
-    except Exception as e:
-        db.session.rollback()
-        raise e

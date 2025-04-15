@@ -69,6 +69,7 @@ def get_race_info(race_id, user_id=None):
 
 
 def get_race_list():
+    update_race_status()
     query = RaceData.query
 
     # 构建响应
@@ -177,3 +178,28 @@ def register_race(user_id, race_uid):
     except Exception as e:
         db.session.rollback()
         raise BusinessException(f"数据库操作失败: {str(e)}", 500)
+
+
+def update_race_status():
+    """比赛状态更新"""
+    try:
+        now = datetime.utcnow()
+
+        # 1. 更新进行中的比赛
+        RaceData.query.filter(
+            RaceData.start_time <= now,
+            RaceData.end_time > now,
+            RaceData.status != 'running'
+        ).update({'status': 'running'})
+
+        # 2. 更新已结束的比赛
+        RaceData.query.filter(
+            RaceData.end_time <= now,
+            RaceData.status != 'ended'
+        ).update({'status': 'ended'})
+
+        db.session.commit()
+        return True
+    except Exception as e:
+        db.session.rollback()
+        raise e

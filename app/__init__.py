@@ -5,6 +5,7 @@ from flask_restx import Api
 from .extensions import db
 import logging
 from logging.handlers import RotatingFileHandler
+from .extensions import celery
 
 api = Api(version="1.0", title="Reborn OJ Master API", description="OJ Master API文档", doc="/oj-master/api")
 
@@ -12,6 +13,7 @@ api = Api(version="1.0", title="Reborn OJ Master API", description="OJ Master AP
 def create_app(config_class='config.Config'):
     app = Flask(__name__)
     app.config.from_object(config_class)
+    celery.conf.update(app.config)
 
     # 初始化扩展
     db.init_app(app)

@@ -1,6 +1,7 @@
 from .extensions import db
 from datetime import datetime
 
+
 class User(db.Model):
     __tablename__ = 'user_data'
 
@@ -49,7 +50,8 @@ class RaceData(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     problems_list = db.Column(db.JSON, nullable=False)
     user_list = db.Column(db.JSON, nullable=False)
-    status = db.Column(db.String(255), nullable=False)
+    status = db.Column(db.Enum('upcoming', 'running', 'ended', name='status_enum'), nullable=False, default='upcoming',
+                       comment='比赛状态')
 
 
 class RaceRank(db.Model):

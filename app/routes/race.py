@@ -1,7 +1,7 @@
 from flask_restx import Resource, fields
 from flask import request, g
 from app import api, db
-from app.services.race_info_service import get_race_info, get_race_list, get_race_rank, register_race
+from app.services.race_service import get_race_info, get_race_list, get_race_rank, register_race
 from app.utils.role_utils import optional_login
 from app.utils.validators import BusinessException
 

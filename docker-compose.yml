@@ -1,0 +1,55 @@
+version: '3.8'
+
+services:
+  redis:
+    image: redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: always
+
+  worker:
+    build: .
+    command: celery -A app.extensions.celery worker --pool=solo --loglevel=info
+    depends_on:
+      - redis
+    volumes:
+      - .:/app
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - FLASK_ENV=development
+    restart: unless-stopped
+
+  beat:
+    build: .
+    command: celery -A app.extensions.celery beat --loglevel=info
+    depends_on:
+      - redis
+      - worker
+    volumes:
+      - .:/app
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - FLASK_ENV=development
+    restart: unless-stopped
+
+  web:
+    build: .
+    command: flask run --host=0.0.0.0
+    ports:
+      - "5000:5000"
+    depends_on:
+      - redis
+    volumes:
+      - .:/app
+    environment:
+      - FLASK_APP=app/__init__.py
+      - FLASK_ENV=development
+      - CELERY_BROKER_URL=redis://redis:6379/0
+    restart: unless-stopped
+
+volumes:
+  redis_data:

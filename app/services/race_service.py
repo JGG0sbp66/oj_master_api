@@ -1,3 +1,4 @@
+import json
 from datetime import datetime
 
 from .. import db
@@ -100,10 +101,16 @@ def get_race_rank(race_id):
 
     race_rank_list = []
     for r in result:
+        # 将 problem_stats 从 JSON 字符串转换为字典
+        try:
+            problem_stats_dict = json.loads(r.problem_stats) if r.problem_stats else {}
+        except json.JSONDecodeError:
+            problem_stats_dict = {}
+
         race_rank_list.append({
             "user_id": r.user_id,
             "contest_id": r.contest_id,
-            "problem_stats": r.problem_stats,
+            "problem_stats": problem_stats_dict,  # 使用转换后的字典
             "total_solved": r.total_solved,
             "total_penalty": r.total_penalty
         })
@@ -204,3 +211,153 @@ def update_race_status():
     except Exception as e:
         db.session.rollback()
         raise e
+
+
+def update_race_rank(user_id, question_uid, is_passed, race_id):
+    """
+    更新比赛排行榜
+
+    :param user_id: 用户ID
+    :param question_uid: 题目ID
+    :param is_passed: 是否通过
+    :param race_id: 比赛ID
+    :return: 字典包含 success, message 和 data 字段
+    """
+    try:
+        # 1. 获取比赛数据
+        race = RaceData.query.get(race_id)
+        if not race:
+            return {
+                "success": False,
+                "message": f"比赛不存在: {race_id}",
+                "data": None
+            }
+
+        # 2. 处理 problems_list 数据格式
+        if isinstance(race.problems_list, str):
+            try:
+                race.problems_list = json.loads(race.problems_list)
+            except json.JSONDecodeError as e:
+                return {
+                    "success": False,
+                    "message": f"比赛题目列表格式错误: {str(e)}",
+                    "data": None
+                }
+
+        # 3. 获取题目字母标识
+        ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+        try:
+            question_uid = int(question_uid)  # 确保类型一致
+            problem_index = race.problems_list.index(question_uid)
+            problem_key = ALPHABET[problem_index]
+        except ValueError:
+            return {
+                "success": False,
+                "message": f"题目 {question_uid} 不在比赛 {race_id} 的题目列表中",
+                "data": None
+            }
+        except IndexError:
+            return {
+                "success": False,
+                "message": "题目数量超过字母表范围 (最大26题)",
+                "data": None
+            }
+
+        # 4. 获取或创建排行榜记录
+        rank = RaceRank.query.filter_by(
+            contest_id=race_id,
+            user_id=user_id
+        ).first()
+
+        current_time = datetime.utcnow()
+
+        if not rank:
+            # 初始化新记录
+            rank = RaceRank(
+                contest_id=race_id,
+                user_id=user_id,
+                problem_stats=json.dumps({}),  # 初始化为空JSON对象
+                total_solved=0,
+                total_penalty=0
+            )
+            db.session.add(rank)
+            db.session.flush()  # 生成ID但不提交事务
+
+        # 5. 解析当前题目状态
+        try:
+            problem_stats = json.loads(rank.problem_stats) if isinstance(rank.problem_stats,
+                                                                         str) else rank.problem_stats
+            if not isinstance(problem_stats, dict):
+                problem_stats = {}
+        except json.JSONDecodeError as e:
+            problem_stats = {}
+            print(f"解析problem_stats出错: {str(e)}")
+
+        # 6. 初始化题目状态(如果不存在)
+        if problem_key not in problem_stats:
+            problem_stats[problem_key] = {
+                "solved": False,
+                "submit_count": 0,
+                "penalty_time": 0,
+                "first_solve_time": None
+            }
+
+        # 7. 更新提交次数
+        problem_stats[problem_key]["submit_count"] += 1
+
+        # 8. 处理通过情况
+        if is_passed and not problem_stats[problem_key]["solved"]:
+            # 计算罚时(分钟): 解题时间 + 错误提交次数*20
+            time_diff = (current_time - race.start_time).total_seconds() / 60
+            penalty_time = round(time_diff + (problem_stats[problem_key]["submit_count"] - 1) * 20, 2)  # 保留2位小数
+
+            problem_stats[problem_key].update({
+                "solved": True,
+                "penalty_time": penalty_time,
+                "first_solve_time": current_time.strftime("%Y-%m-%d %H:%M:%S")
+            })
+
+            # 更新总解题数和总罚时
+            rank.total_solved += 1
+            rank.total_penalty += penalty_time
+
+        # 9. 序列化并保存数据
+        try:
+            # 使用紧凑的JSON格式(无额外空格)
+            rank.problem_stats = json.dumps(
+                problem_stats,
+                ensure_ascii=False,
+                separators=(',', ':')
+            )
+        except (TypeError, ValueError) as e:
+            db.session.rollback()
+            return {
+                "success": False,
+                "message": f"无法序列化题目状态数据: {str(e)}",
+                "data": None
+            }
+
+        # 10. 提交事务
+        db.session.commit()
+
+        return {
+            "success": True,
+            "message": "排行榜更新成功",
+            "data": {
+                "contest_id": race_id,
+                "user_id": user_id,
+                "problem_key": problem_key,
+                "problem_stats": problem_stats[problem_key],
+                "total_solved": rank.total_solved,
+                "total_penalty": rank.total_penalty
+            }
+        }
+
+    except Exception as e:
+        db.session.rollback()
+        return {
+            "success": False,
+            "message": f"更新排行榜失败: {str(e)}",
+            "data": None,
+            "error": str(e)
+        }

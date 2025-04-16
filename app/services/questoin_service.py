@@ -1,3 +1,4 @@
+from .race_service import update_race_rank
 from .. import db
 from ..models import UserQuestionStatus, QuestionsData, User
 import math
@@ -166,13 +167,13 @@ def add_question_record(user_id, question_uid, is_passed):
 
 def update_user_question_status(user_id, question_id, is_correct, race_id=0):
     """
-    更新用户题目状态到数据库
+    更新用户题目状态到数据库，并处理一血和全局统计记录
     :param user_id: 用户ID
     :param question_id: 题目ID
     :param is_correct: 答案是否正确
     :param race_id: 比赛ID（默认为0表示题库）
     """
-    # 检查是否已有记录
+    # 检查是否已有用户个人记录
     existing_record = UserQuestionStatus.query.filter_by(
         user_id=user_id,
         question_id=question_id,
@@ -200,6 +201,54 @@ def update_user_question_status(user_id, question_id, is_correct, race_id=0):
         )
         db.session.add(new_record)
 
+    # 比赛模式下的特殊处理
+    if race_id != 0:
+        # 获取或创建全局统计记录（user_id=0）
+        global_stats = UserQuestionStatus.query.filter_by(
+            race_id=race_id,
+            question_id=question_id,
+            user_id=0  # 全局统计专用
+        ).first()
+
+        if not global_stats:
+            global_stats = UserQuestionStatus(
+                race_id=race_id,
+                user_id=0,
+                question_id=question_id,
+                state='已通过' if is_correct else '未通过',
+                submit=0,
+                solve=0,
+                first_blood=None
+            )
+            db.session.add(global_stats)
+            db.session.flush()  # 确保获得ID
+
+        # 更新全局统计（原子操作）
+        if is_correct:
+            # 如果是正确答案，更新解决数
+            UserQuestionStatus.query.filter_by(
+                race_id=race_id,
+                question_id=question_id,
+                user_id=0
+            ).update({
+                'submit': UserQuestionStatus.submit + 1,
+                'solve': UserQuestionStatus.solve + 1,
+                'state': '已通过'
+            })
+
+            # 处理一血逻辑（仅在第一次正确解答时）
+            if global_stats.first_blood is None:
+                global_stats.first_blood = user_id
+        else:
+            # 如果是错误答案，只更新提交数
+            UserQuestionStatus.query.filter_by(
+                race_id=race_id,
+                question_id=question_id,
+                user_id=0
+            ).update({
+                'submit': UserQuestionStatus.submit + 1
+            })
+
     db.session.commit()
 
 
@@ -212,6 +261,8 @@ def judge_question(user_id, question_uid, race_id, result):
 
         add_question_record(user_id, question_uid, is_passed)
         update_user_question_status(user_id, question_uid, is_passed, race_id=race_id)
+        if race_id and race_id > 0:
+            update_race_rank(user_id, question_uid, is_passed, race_id)
 
         return {
             "success": True,

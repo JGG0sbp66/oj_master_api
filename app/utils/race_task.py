@@ -1,5 +1,8 @@
+from datetime import timedelta
+
 from celery.schedules import crontab
-from ..extensions import celery
+from ..extensions import celery, db
+from ..models import UserQuestionStatus
 from ..services.race_service import update_race_status
 
 
@@ -11,6 +14,7 @@ def setup_periodic_tasks(sender, **kwargs):
         check_race_status.s(),
         name='check race status every minute'
     )
+
 
 @celery.task
 def check_race_status():

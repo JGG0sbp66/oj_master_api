@@ -15,7 +15,7 @@ ai_message_model = api.model('AIMessage', {
 })
 
 ai_judge_parser = reqparse.RequestParser()
-ai_judge_parser.add_argument('prompt', type=str, required=False, help='额外的提示词', location='form')
+ai_judge_parser.add_argument('prompt', type=str, required=False, help='用户输入的代码', location='form')
 ai_judge_parser.add_argument('question', type=str, required=True, help='要评判的问题', location='form')
 ai_judge_parser.add_argument('question_uid', type=str, required=False, help='问题唯一标识', location='form')
 ai_judge_parser.add_argument('race_id', type=int, required=False, help='比赛ID', location='form')

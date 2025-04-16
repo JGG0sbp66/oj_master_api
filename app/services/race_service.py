@@ -44,15 +44,16 @@ def get_race_info(race_id, user_id=None):
 
         for pid in race.problems_list:
             question = questions.get(pid)
-            stats = global_stats.get(pid, {})
             question_data = question.question if question else {}
+            stats = global_stats.get(pid, {})
 
             problems_info.append({
-                "title": question_data.get("title", "未知题目"),  # 从JSON字段获取标题
+                "uid": pid,  # 添加题目UID
+                "title": question_data.get("title", "未知题目"),
                 "status": problem_statuses.get(pid, "未尝试") if user_id else "未登录",
                 "submit_num": stats.get("submit_num", 0),
                 "solve_num": stats.get("solve_num", 0),
-                "first_blood_user": stats.get("first_blood_user")  # 返回UID或None
+                "first_blood_user": stats.get("first_blood_user")
             })
 
     return {

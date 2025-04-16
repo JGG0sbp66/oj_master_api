@@ -201,3 +201,24 @@ def update_user_question_status(user_id, question_id, is_correct, race_id=0):
         db.session.add(new_record)
 
     db.session.commit()
+
+
+def judge_question(user_id, question_uid, race_id, result):
+    try:
+        result = result[-4:]
+        is_passed = False
+        if result == "答案正确":
+            is_passed = True
+
+        add_question_record(user_id, question_uid, is_passed)
+        update_user_question_status(user_id, question_uid, is_passed, race_id=race_id)
+
+        return {
+            "success": True,
+            "message": result
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "message": f"判题过程中发生错误: {str(e)}"
+        }, 500

@@ -35,7 +35,7 @@ class Config:
     DEFAULT_AVATAR = 'default.png'
 
     # ollama 路径配置
-    OLLAMA_ADDRESS = "http://192.168.13.191:11434/api"
+    OLLAMA_ADDRESS = "http://localhost:11434/api"
 
     # SMTP 和 Redis 配置
     SMTP_CONFIG = {

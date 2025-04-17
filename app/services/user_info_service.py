@@ -1,5 +1,10 @@
+import re
+
 import bcrypt
+import requests
 from flask import send_from_directory, current_app
+from sqlalchemy import func
+
 from ..extensions import db
 from app.models import User, QuestionsData, RaceRank, RaceData
 from app.utils.validators import is_safe_filename
@@ -7,19 +12,33 @@ from config import Config
 import os
 
 
-def get_avatar_service(user_id):
-    """支持多格式的头像获取服务"""
-    # 检查默认头像是否存在
-    if not os.path.exists(os.path.join(Config.AVATAR_UPLOAD_DIR, Config.DEFAULT_AVATAR)):
-        return {"success": False, "message": "默认头像不存在"}, 404
+# def get_avatar_service(user_id):
+#     """支持多格式的头像获取服务"""
+#     # 检查默认头像是否存在
+#     if not os.path.exists(os.path.join(Config.AVATAR_UPLOAD_DIR, Config.DEFAULT_AVATAR)):
+#         return {"success": False, "message": "默认头像不存在"}, 404
+#
+#     # 用户未登录/未指定用户ID时返回默认头像
+#     if user_id is None:
+#         return send_avatar_file(Config.DEFAULT_AVATAR)
+#
+#     # 尝试查找用户头像（支持多种格式）
+#     avatar_filename = find_user_avatar(user_id)
+#     return send_avatar_file(avatar_filename or Config.DEFAULT_AVATAR)
 
-    # 用户未登录/未指定用户ID时返回默认头像
+def get_avatar_service(user_id):
+    """支持多格式的头像获取服务（如果头像不存在，不返回默认头像，前端自行处理）"""
+    # 用户未登录/未指定用户ID时直接返回404（前端处理）
     if user_id is None:
-        return send_avatar_file(Config.DEFAULT_AVATAR)
+        return {"success": False, "message": "未提供用户ID"}, 404
 
     # 尝试查找用户头像（支持多种格式）
     avatar_filename = find_user_avatar(user_id)
-    return send_avatar_file(avatar_filename or Config.DEFAULT_AVATAR)
+
+    # 如果找到用户头像就返回，否则404（前端会自行生成）
+    if avatar_filename:
+        return send_avatar_file(avatar_filename)
+    return {"success": False, "message": "头像不存在"}, 404
 
 
 def send_avatar_file(filename):
@@ -71,6 +90,18 @@ def delete_old_avatars(user_id):
             os.remove(old_file)
         except FileNotFoundError:
             pass
+
+
+def get_user_info(user_id):
+    """获取用户信息（包括用户名、邮箱）"""
+    user = User.query.get(user_id)
+    if not user:
+        return None
+
+    return {
+        "username": user.username,
+        "email": user.email,
+    }
 
 
 def get_user_questions(user_id, limit=10):
@@ -327,3 +358,96 @@ def to_chance_password(user_id, old_password, new_password, re_new_password):
             "success": False,
             "message": f"密码修改失败: {str(e)}"
         }, 500
+
+
+def to_change_username(user_id, new_username):
+    """修改用户名"""
+    # 1. 参数校验
+    if not all([user_id, new_username]):
+        return {
+            "success": False,
+            "message": "参数错误"
+        }, 400
+
+    # 2. 用户存在性检查
+    user = User.query.get(user_id)
+    if not user:
+        return {
+            "success": False,
+            "message": "用户不存在"
+        }, 404
+
+    # 3. 新用户名合法性检查（长度、字符等）
+    if not re.match(r'^[a-zA-Z0-9]{5,12}$', new_username):
+        return {
+            'success': False, 'message': '用户名必须是5-12位字母数字组合'
+        }, 400
+
+    # 4. 检查用户名是否已存在（不区分大小写）
+    existing_user = User.query.filter(
+        func.lower(User.username) == func.lower(new_username),
+        User.uid != user_id  # 排除当前用户
+    ).first()
+    if existing_user:
+        return {
+            "success": False,
+            "message": "用户名已存在"
+        }, 409
+
+    # 5. 更新用户名
+    try:
+        user.username = new_username
+        db.session.commit()
+        return {
+            "success": True,
+            "message": "用户名修改成功"
+        }
+    except Exception as e:
+        db.session.rollback()
+        return {
+            "success": False,
+            "message": f"用户名修改失败: {str(e)}"
+        }, 500
+
+
+def to_change_email(user_id, email, email_code):
+    """修改邮箱（需验证邮箱验证码）"""
+    # 1. 参数校验
+    if not all([user_id, email, email_code]):
+        return {"success": False, "message": "参数错误"}, 400
+
+    # 2. 用户存在性检查
+    user = User.query.get(user_id)
+    if not user:
+        return {"success": False, "message": "用户不存在"}, 404
+
+    # 3. 检查邮箱是否已被其他用户占用
+    # existing_user = User.query.filter(
+    #     User.email == email,
+    #     User.uid != user_id  # 排除当前用户
+    # ).first()
+    # if existing_user:
+    #     return {"success": False, "message": "邮箱已被占用"}, 409
+
+    # 4. 验证邮箱验证码
+    try:
+        response = requests.post(
+            "http://localhost:5000/api/verify-email-code",
+            json={"email": email, "code": email_code},
+            headers={"Content-Type": "application/json"}
+        )
+        result = response.json()
+    except Exception as e:
+        return {"success": False, "message": f"验证码服务异常: {str(e)}"}, 500
+
+    if not result.get("success"):
+        return {"success": False, "message": "邮箱验证码错误或已过期"}, 403
+
+    # 5. 更新邮箱
+    try:
+        user.email = email
+        db.session.commit()
+        return {"success": True, "message": "邮箱修改成功"}
+    except Exception as e:
+        db.session.rollback()
+        return {"success": False, "message": f"邮箱修改失败: {str(e)}"}, 500

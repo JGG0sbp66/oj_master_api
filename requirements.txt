@@ -12,3 +12,4 @@ python-dotenv~=1.1.0
 celery~=5.5.1
 pymysql
 flask_sqlalchemy
+openai~=1.64.0

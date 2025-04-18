@@ -1,7 +1,7 @@
 from flask_restx import Resource, fields, reqparse
 from flask import request, Response, stream_with_context, g
 from app import api  # 从主模块导入api实例
-from app.services.ollama_service import generate_completion_stream, generate_completion, explain2, \
+from app.services.aiapi_service import generate_completion_stream, generate_completion, explain2, \
     judge_prompt, question_start, question_end
 from app.services.questoin_service import judge_question
 from app.utils.role_utils import optional_login
@@ -43,7 +43,7 @@ class AIMessage(Resource):
 
             # 流式响应
             return Response(
-                stream_with_context(generate_completion_stream(prompt, model="gemma3:4b")),
+                stream_with_context(generate_completion_stream(prompt)),
                 mimetype='text/event-stream',
                 headers={
                     'Cache-Control': 'no-cache',
@@ -90,8 +90,7 @@ class AIJudge(Resource):
                     "message": "字段不能为空"
                 }, 400
 
-            result = generate_completion(explain2 + judge_prompt + question_start + question + question_end + prompt,
-                                         model="deepseek-r1:7b")
+            result = generate_completion(explain2 + judge_prompt + question_start + question + question_end + prompt)
             return judge_question(user_id, question_uid, race_id, result)
 
         except Exception as e:

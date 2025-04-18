@@ -47,6 +47,15 @@ def get_race_info(race_id, user_id=None):
             question = questions.get(pid)
             question_data = question.question if question else {}
             stats = global_stats.get(pid, {})
+            first_blood_user_uid = stats.get("first_blood_user")
+            first_blood_user = User.query.filter_by(uid=first_blood_user_uid).first()
+
+            first_blood_user_info = {}
+            if first_blood_user:
+                first_blood_user_info = {
+                    "uid": first_blood_user.uid,
+                    "username": first_blood_user.username
+                }
 
             problems_info.append({
                 "uid": pid,  # 添加题目UID
@@ -54,7 +63,7 @@ def get_race_info(race_id, user_id=None):
                 "status": problem_statuses.get(pid, "未尝试") if user_id else "未登录",
                 "submit_num": stats.get("submit_num", 0),
                 "solve_num": stats.get("solve_num", 0),
-                "first_blood_user": stats.get("first_blood_user")
+                "first_blood_user": first_blood_user_info
             })
 
     return {

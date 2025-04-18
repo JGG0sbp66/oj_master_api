@@ -49,3 +49,6 @@ class Config:
         "port": 6379,
         "db": 0
     }
+
+    #deepseek api
+    deepseek_api_key = os.environ.get('DEEPSEEK_API_KEY')

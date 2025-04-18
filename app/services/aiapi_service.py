@@ -159,7 +159,7 @@ def generate_completion_ollama(prompt, model="deepseek-r1:32b"):
 
 from openai import OpenAI
 
-client = OpenAI(api_key="api_key", base_url="https://api.deepseek.com")
+client = OpenAI(api_key=Config.deepseek_api_key, base_url="https://api.deepseek.com")
 
 
 def generate_completion_stream(prompt, model="deepseek-chat"):

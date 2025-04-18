@@ -74,7 +74,8 @@ def get_race_info(race_id, user_id=None):
             "problems": problems_info,
             "user_num": len(race.user_list),
             "user_status": "已登录" if user_id else "游客",
-            "tags": race.tags
+            "tags": race.tags,
+            "status": race.status,
         }
     }
 
@@ -117,8 +118,17 @@ def get_race_rank(race_id):
         except json.JSONDecodeError:
             problem_stats_dict = {}
 
+        user = User.query.filter_by(uid=r.user_id).first()
+
+        user_info = {}
+        if user:
+            user_info = {
+                "uid": user.uid,
+                "username": user.username
+            }
+
         race_rank_list.append({
-            "user_id": r.user_id,
+            "user_info": user_info,
             "contest_id": r.contest_id,
             "problem_stats": problem_stats_dict,  # 使用转换后的字典
             "total_solved": r.total_solved,

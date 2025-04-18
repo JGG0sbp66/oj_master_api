@@ -40,6 +40,7 @@ def create_app(config_class='config.Config'):
     from .routes.admin_routes.admin_question import admin_questions_ns
     from .routes.user_routes.user_info import user_info_ns
     from .routes.askAi import ai_ns
+    from .routes.panel import panel_ns
 
     api.add_namespace(auth_ns)
     api.add_namespace(questions_ns)
@@ -48,6 +49,7 @@ def create_app(config_class='config.Config'):
     api.add_namespace(questions_ns)
     api.add_namespace(user_info_ns)
     api.add_namespace(ai_ns)
+    api.add_namespace(panel_ns)
 
     app.permanent_session_lifetime = app.config['PERMANENT_SESSION_LIFETIME']
 

@@ -61,7 +61,7 @@ create_race_input_model = admin_ns.model('RaceInput', {
     'tags': fields.List(
         fields.Nested(tag_model),
         required=True,
-        example=[{"name": "未开始", "type": "pending"}],
+        example=[{"name": "个人赛", "type": "individual"}],
         description='标签数组'
     ),
     'problems_list': fields.List(

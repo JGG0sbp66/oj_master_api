@@ -1,9 +1,11 @@
 import smtplib
 from email.mime.text import MIMEText
 from config import Config
-import requests, random, string, redis
-from flask import current_app as app
+import requests, random, string
+from flask import current_app as app, current_app
 from email.mime.multipart import MIMEMultipart
+
+from .. import redis_wrapper
 from ..utils.validators import render_email_template
 
 
@@ -38,7 +40,6 @@ def generate_code(length=6):
 
 
 SMTP_CONFIG = Config.SMTP_CONFIG
-REDIS_CONFIG = Config.REDIS_CONFIG
 
 
 # 发送邮件函数
@@ -71,25 +72,17 @@ def send_verification_email(to_email: str, code: str) -> bool:
 
 # 存储验证码到Redis（设置5分钟过期）
 def save_code_to_redis(email, code):
-    r = redis.Redis(**REDIS_CONFIG)
-    r.setex(f"verify_code:{email}", 300, code)
+    redis_wrapper.setex(f"verify_code:{email}", 300, code)
 
 
 def verify_email_code(email, user_code):
-    r = redis.Redis(**REDIS_CONFIG)
     try:
-        # 统一处理Redis返回的bytes/str类型（兼容不同Redis版本）
-        stored_code = r.get(f"verify_code:{email}")
-
-        # 类型安全比对（自动处理bytes或str）
-        if isinstance(stored_code, bytes):
-            stored_code = stored_code.decode('utf-8')
+        stored_code = redis_wrapper.get(f"verify_code:{email}")
 
         if stored_code == user_code:
-            r.delete(f"verify_code:{email}")
+            redis_wrapper.delete(f"verify_code:{email}")
             return {"success": True, "message": "验证码正确"}, 200
-        else:
-            return {"success": False, "message": "验证码错误"}, 400
+        return {"success": False, "message": "验证码错误"}, 400
     except Exception as e:
-        print(f"验证码校验异常: {e}")
+        current_app.logger.error(f"验证码校验异常: {e}")
         return {"success": False, "message": "服务器错误"}, 500

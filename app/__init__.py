@@ -2,7 +2,7 @@
 from flask import Flask
 from flask_cors import CORS
 from flask_restx import Api
-from .extensions import db
+from .extensions import db, redis_wrapper
 import logging
 from logging.handlers import RotatingFileHandler
 from .extensions import celery
@@ -15,8 +15,12 @@ def create_app(config_class='config.Config'):
     app.config.from_object(config_class)
     celery.conf.update(app.config)
 
-    # 初始化扩展
+    # 初始化Redis
+    redis_wrapper.init_app(app)
+
+    # 初始化数据库
     db.init_app(app)
+
     CORS(
         app,
         resources={

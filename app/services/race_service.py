@@ -89,6 +89,7 @@ def get_race_list():
 
     for r in races:
         race_list.append({
+            "race_uid": r.uid,
             "title": r.title,
             "logos": r.logos,
             "startTime": r.start_time.strftime("%Y-%m-%d %H:%M:%S"),

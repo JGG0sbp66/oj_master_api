@@ -76,7 +76,7 @@ class AIJudge(Resource):
             question = request.form.get('question', None)
             user_id = getattr(g, 'current_user_id', None)
             question_uid = request.form.get('question_uid', None)
-            race_id = int(request.form.get('race_id', 0))
+            race_id = int(request.form.get('race_uid', 0))
 
             if user_id is None:
                 return {

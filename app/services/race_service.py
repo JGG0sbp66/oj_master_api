@@ -1,6 +1,5 @@
 import json
 from datetime import datetime
-
 from .. import db
 from ..models import RaceData, QuestionsData, UserQuestionStatus, RaceRank, User
 from ..utils.validators import BusinessException
@@ -164,13 +163,13 @@ def register_race(user_id, race_uid):
         raise BusinessException("您已经报名过该比赛", 400)
 
     # 4. 检查比赛是否已开始
-    if datetime.utcnow() > race.start_time:
+    if datetime.now() > race.start_time:
         raise BusinessException("比赛已开始，不能报名", 400)
 
     # 5. 更新用户数据 - 关键修正点
     new_race_entry = {
         "race_uid": race_uid,  # 保持与数据库一致的类型
-        "register_time": datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
+        "register_time": datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     }
 
     # 正确更新JSON字段的方法
@@ -211,7 +210,7 @@ def register_race(user_id, race_uid):
 def update_race_status():
     """比赛状态更新"""
     try:
-        now = datetime.utcnow()
+        now = datetime.now()
 
         # 1. 更新进行中的比赛
         RaceData.query.filter(
@@ -289,7 +288,7 @@ def update_race_rank(user_id, question_uid, is_passed, race_id):
             user_id=user_id
         ).first()
 
-        current_time = datetime.utcnow()
+        current_time = datetime.now()
 
         if not rank:
             # 初始化新记录
@@ -381,3 +380,37 @@ def update_race_rank(user_id, question_uid, is_passed, race_id):
             "data": None,
             "error": str(e)
         }
+
+
+from datetime import datetime
+
+
+def validate_race_access(user_id, race_id):
+    """
+    验证用户是否有权限使用该比赛的AI评判功能
+    :param user_id: 用户ID
+    :param race_id: 比赛ID
+    :return: (是否通过验证, 错误信息, HTTP状态码)
+    """
+    if race_id <= 0:
+        return True, None, None  # 非比赛问题直接通过
+
+    # 检查比赛是否存在
+    race = RaceData.query.get(race_id)
+
+    if not race:
+        return False, "比赛不存在", 404
+
+    # 检查比赛是否已结束
+    if race.status == 'ended':
+        return False, "比赛已结束，无法提交", 403
+
+    if race.status == 'upcoming':
+        return False, "比赛未开始，无法提交", 403
+
+    # 检查用户是否在报名列表中
+    user_list = race.user_list or []
+    if str(user_id) not in user_list:  # 注意user_list可能是字符串ID列表
+        return False, "未报名该比赛，无法提交", 403
+
+    return True, None, None

@@ -149,7 +149,7 @@ class RaceList(Resource):
             start_time=start_time,
             end_time=end_time,
             duration=duration,
-            tags=data['tags'],
+            tags=data.get('tags', []),
             problems_list=data['problems_list'],
             user_list=[],
             status=status
@@ -179,7 +179,7 @@ class RaceDetail(Resource):
         race = RaceData.query.get(race_id)
         data = api.payload
 
-        if not RaceData:
+        if not race:
             return {"success": False, "message": "更新失败，比赛不存在"}, 404
 
         # 更新字段
@@ -193,6 +193,10 @@ class RaceDetail(Resource):
             race.problems_list = data['problems_list']
         if 'user_list' in data:
             race.user_list = data['user_list']
+        if 'status' in data:
+            if data['status'] not in ['upcoming', 'ended', 'running']:  # 注意检查拼写
+                return {"message": "status必须是upcoming、ended或running"}, 400
+            race.status = data['status']
 
         # 处理时间更新
         if 'start_time' in data or 'end_time' in data:

@@ -410,7 +410,7 @@ def validate_race_access(user_id, race_id):
 
     # 检查用户是否在报名列表中
     user_list = race.user_list or []
-    if str(user_id) not in user_list:  # 注意user_list可能是字符串ID列表
+    if user_id not in user_list:  # 注意user_list可能是字符串ID列表
         return False, "未报名该比赛，无法提交", 403
 
     return True, None, None

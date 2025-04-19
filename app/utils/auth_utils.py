@@ -10,7 +10,7 @@ def generate_token(uid, username, role):
         "uid": uid,
         "username": username,
         "role": role,
-        "exp": datetime.utcnow() + current_app.config['JWT_EXPIRATION']
+        "exp": datetime.now() + current_app.config['JWT_EXPIRATION']
     }
     return jwt.encode(
         payload,

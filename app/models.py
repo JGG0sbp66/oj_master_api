@@ -46,8 +46,8 @@ class RaceData(db.Model):
     end_time = db.Column(db.DateTime, nullable=False)
     duration = db.Column(db.String(20), nullable=True)
     tags = db.Column(db.JSON, nullable=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.now())
+    updated_at = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)
     problems_list = db.Column(db.JSON, nullable=False)
     user_list = db.Column(db.JSON, nullable=False)
     status = db.Column(db.Enum('upcoming', 'running', 'ended', name='status_enum'), nullable=False, default='upcoming',

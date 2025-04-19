@@ -254,9 +254,9 @@ def update_user_question_status(user_id, question_id, is_correct, race_id=0):
 
 def judge_question(user_id, question_uid, race_id, result):
     try:
-        result = result[-4:]
+        result = result[-10:]
         is_passed = False
-        if result == "答案正确":
+        if "答案正确" in result:
             is_passed = True
 
         add_question_record(user_id, question_uid, is_passed)

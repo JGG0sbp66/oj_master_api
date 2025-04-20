@@ -273,3 +273,15 @@ def judge_question(user_id, question_uid, race_id, result):
             "success": False,
             "message": f"判题过程中发生错误: {str(e)}"
         }, 500
+
+
+def get_recent_questions(limit=5):
+    questions = QuestionsData.query.order_by(
+        QuestionsData.updated_at.desc()
+    ).limit(limit).all()
+
+    return [{
+        'uid': q.uid,
+        'title': q.question.get('title', ''),
+        'topic': q.topic
+    } for q in questions]

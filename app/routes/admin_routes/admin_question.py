@@ -94,7 +94,11 @@ class AdminQuestionList(Resource):
 
         db.session.add(new_question)
         db.session.commit()
-        return {'success': True, 'message': f'新增题目成功，uid：{new_question.uid}'}, 201
+        return {
+            'success': True,
+            'message': '新增题目成功',
+            'uid': new_question.uid
+        }, 201
 
 
 @admin_questions_ns.route('/admin-question/<int:question_id>')

@@ -184,7 +184,7 @@ def generate_completion_stream(prompt, model="deepseek-chat"):
         yield f"data: {json.dumps({'error': str(e)})}\n\n"
 
 
-def generate_completion(prompt, model="deepseek-chat"):
+def generate_completion(prompt, model="deepseek-reasoner"):
     """
     非流式生成AI回复 - DeepSeek版本
     """

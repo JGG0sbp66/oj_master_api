@@ -63,3 +63,10 @@ class BusinessException(Exception):
         super().__init__(message)
         self.status_code = status_code
         self.message = message
+
+
+def safe_int(value, default=0):
+    try:
+        return int(value)
+    except (ValueError, TypeError):
+        return default

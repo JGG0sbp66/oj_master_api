@@ -6,6 +6,7 @@ from app.services.aiapi_service import generate_completion_stream, generate_comp
 from app.services.questoin_service import judge_question
 from app.services.race_service import validate_race_access
 from app.utils.role_utils import optional_login
+from app.utils.validators import safe_int
 
 # 创建 AI 相关接口命名空间
 ai_ns = api.namespace('AI', description='AI 相关接口', path='/api')
@@ -73,7 +74,7 @@ class AIJudge(Resource):
             question = request.form.get('question')
             user_id = getattr(g, 'current_user_id')
             question_uid = request.form.get('question_uid')
-            race_id = int(request.form.get('race_uid', 0))
+            race_id = safe_int(request.form.get('race_uid'), 0)
 
             # 基础验证
             if not user_id:

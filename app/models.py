@@ -20,6 +20,7 @@ class QuestionsData(db.Model):
     uid = db.Column(db.Integer, primary_key=True)
     question = db.Column(db.JSON, nullable=True)
     topic = db.Column(db.Enum('入门', '普及', '提高', '省选', 'NOI', 'CTSC', name='status_enum'))
+    updated_at = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)
 
 
 class UserQuestionStatus(db.Model):

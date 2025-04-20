@@ -18,6 +18,7 @@ example_model = admin_questions_ns.model('Example', {
 
 # 创建题目输入模型（严格验证）
 create_question_model = admin_questions_ns.model('CreateQuestion', {
+    'uid': fields.Integer(required=True, example=1),
     'question': fields.Nested(admin_questions_ns.model('QuestionData', {
         'title': fields.String(required=True, min_length=1, example='两数之和'),
         'description': fields.String(required=True, min_length=1, example='计算两个整数的和'),
@@ -47,7 +48,7 @@ update_question_model = admin_questions_ns.model('UpdateQuestion', {
 })
 
 
-@admin_questions_ns.route('/')
+@admin_questions_ns.route('/admin-question')
 class AdminQuestionList(Resource):
     @admin_questions_ns.marshal_list_with(create_question_model)
     @role_required('admin')

@@ -1,7 +1,7 @@
 from flask_restx import Resource, fields
 from flask import request, g
 from app import api
-from app.services.questoin_service import get_questions, get_question_detail
+from app.services.questoin_service import get_questions, get_question_detail, get_recent_questions
 from app.utils.role_utils import optional_login
 
 # 创建问题相关接口命名空间
@@ -18,6 +18,7 @@ question_list_model = questions_ns.model('QuestionList', {
 question_detail_model = questions_ns.model('QuestionDetail', {
     'uid': fields.Integer(required=True, description='问题ID')
 })
+
 
 @questions_ns.route('/questions')
 class QuestionList(Resource):
@@ -50,6 +51,7 @@ class QuestionList(Resource):
                 "message": "参数类型错误"
             }, 400
 
+
 @questions_ns.route('/question-detail')
 class QuestionDetail(Resource):
     @questions_ns.doc(description='获取问题详情')
@@ -69,6 +71,25 @@ class QuestionDetail(Resource):
             return {
                 "success": True,
                 "question_detail": result
+            }
+        except ValueError:
+            return {
+                "success": False,
+                "message": "参数类型错误"
+            }, 400
+
+
+@questions_ns.route('/home-get-question')
+class HomeGetQuestion(Resource):
+    @questions_ns.doc(description='获取首页问题')
+    def get(self):
+        """获取首页问题（按更新时间倒序）"""
+        try:
+            questions = get_recent_questions()
+
+            return {
+                "success": True,
+                "questions": questions
             }
         except ValueError:
             return {

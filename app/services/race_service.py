@@ -64,6 +64,8 @@ def get_race_info(race_id, user_id=None):
                 "solve_num": stats.get("solve_num", 0),
                 "first_blood_user": first_blood_user_info
             })
+    # 判断用户是否报名
+    is_registered = "已报名" if user_id and user_id in race.user_list else "未报名"
 
     return {
         "race_info": {
@@ -75,6 +77,7 @@ def get_race_info(race_id, user_id=None):
             "user_status": "已登录" if user_id else "游客",
             "tags": race.tags,
             "status": race.status,
+            "is_registered": is_registered
         }
     }
 
@@ -158,8 +161,7 @@ def register_race(user_id, race_uid):
         raise BusinessException("比赛不存在", 404)
 
     # 3. 检查是否已报名
-    user_races = user.race or []
-    if any(str(r.get('race_uid')) == str(race_uid) for r in user_races):  # 添加类型转换
+    if user_id in race.user_list:
         raise BusinessException("您已经报名过该比赛", 400)
 
     # 4. 检查比赛是否已开始

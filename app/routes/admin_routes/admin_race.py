@@ -1,7 +1,7 @@
 from flask_restx import Resource, fields
 from datetime import datetime
 from app import api, db
-from app.models import RaceData
+from app.models import RaceData, User
 from app.utils.role_utils import role_required
 
 # 创建命名空间
@@ -40,8 +40,8 @@ race_model = admin_ns.model('Race', {
         description='题目UID数组'
     ),
     'user_list': fields.List(
-        fields.Integer,
-        example=[101, 102, 103],
+        fields.String,
+        example=["user1", "user2", "user3"],
         description='报名用户UID数组'
     ),
     'status': fields.String(description='比赛状态')
@@ -169,7 +169,34 @@ class RaceDetail(Resource):
     def get(self, race_id):
         """获取单个比赛详情"""
         race = RaceData.query.get_or_404(race_id)
-        return race
+
+        # 转换user_list中的uid为username
+        user_list_with_names = []
+        for uid in race.user_list:
+            user = User.query.get(uid)
+            if user:
+                user_list_with_names.append(user.username)
+            else:
+                # 如果用户不存在，保留原始ID或做其他处理
+                user_list_with_names.append(str(uid))
+
+        # 创建一个新的字典来返回，避免修改原始race对象
+        race_data = {
+            "uid": race.uid,
+            "title": race.title,
+            "logos": race.logos,
+            "start_time": race.start_time,
+            "end_time": race.end_time,
+            "duration": race.duration,
+            "tags": race.tags,
+            "created_at": race.created_at,
+            "updated_at": race.updated_at,
+            "problems_list": race.problems_list,
+            "user_list": user_list_with_names,  # 使用转换后的用户名列表
+            "status": race.status
+        }
+
+        return race_data
 
     @admin_ns.doc(security='Bearer')
     @role_required('admin')
@@ -192,7 +219,7 @@ class RaceDetail(Resource):
         if 'problems_list' in data:
             race.problems_list = data['problems_list']
         if 'user_list' in data:
-            race.user_list = data['user_list']
+            race.user_list = list(map(int, data['user_list']))
         if 'status' in data:
             if data['status'] not in ['upcoming', 'ended', 'running']:  # 注意检查拼写
                 return {"message": "status必须是upcoming、ended或running"}, 400

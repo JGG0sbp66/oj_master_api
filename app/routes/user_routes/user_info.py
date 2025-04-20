@@ -1,9 +1,10 @@
 from flask_restx import Resource, fields
 from flask import request, g
 from app import api  # 从主模块导入api实例
-from app.services.user_info_service import to_chance_password, to_change_username, to_change_email, get_user_info
+from app.services.user_info_service import to_chance_password, to_change_username, to_change_email, get_user_info, \
+    get_username
 from app.services.user_info_service import get_avatar_service, save_avatar, get_user_questions, get_user_race
-from app.utils.role_utils import optional_login
+from app.utils.role_utils import optional_login, role_required
 
 # 创建用户信息命名空间
 user_info_ns = api.namespace('User', description='用户信息相关接口', path='/api')
@@ -226,4 +227,19 @@ class ChangeEmail(Resource):
             return {
                 "success": False,
                 "message": f"修改邮箱失败: {str(e)}"
+            }, 500
+
+
+@user_info_ns.route('/get-username/<int:user_id>')
+class GetUsername(Resource):
+    @user_info_ns.doc(description='获取用户名')
+    @role_required('admin')
+    def get(self, user_id):
+        """获取用户名"""
+        try:
+            return get_username(user_id)
+        except Exception as e:
+            return {
+                "success": False,
+                "message": f"获取用户名失败: {str(e)}"
             }, 500

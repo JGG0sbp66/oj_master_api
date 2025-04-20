@@ -451,3 +451,18 @@ def to_change_email(user_id, email, email_code):
     except Exception as e:
         db.session.rollback()
         return {"success": False, "message": f"邮箱修改失败: {str(e)}"}, 500
+
+
+def get_username(uid):
+    """获取用户名"""
+    # 1. 参数校验
+    if not uid:
+        return {"success": False, "message": "参数错误"}, 400
+
+    # 2. 用户存在性检查
+    user = User.query.get(uid)
+    if not user:
+        return {"success": False, "message": "用户不存在"}, 404
+
+    # 3. 返回用户名
+    return {"success": True, "message": user.username}

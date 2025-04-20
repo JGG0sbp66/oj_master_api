@@ -97,7 +97,7 @@ class AdminQuestionList(Resource):
         return {'success': True, 'message': f'新增题目成功，uid：{new_question.uid}'}, 201
 
 
-@admin_questions_ns.route('/<int:question_id>')
+@admin_questions_ns.route('/admin-question/<int:question_id>')
 class AdminQuestionDetail(Resource):
     @admin_questions_ns.response(404, '题目不存在')
     @role_required('admin')

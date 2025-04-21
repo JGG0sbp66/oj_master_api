@@ -202,7 +202,8 @@ def update_user_question_status(user_id, question_id, is_correct, race_id=0):
         db.session.add(new_record)
 
     # 比赛模式下的特殊处理
-    if race_id != 0:
+    # if race_id != 0:
+    if True:
         # 获取或创建全局统计记录（user_id=0）
         global_stats = UserQuestionStatus.query.filter_by(
             race_id=race_id,

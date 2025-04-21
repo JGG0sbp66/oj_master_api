@@ -1,7 +1,7 @@
 from flask_restx import Resource, fields
 from app import api, db
 from app.utils.role_utils import role_required
-from app.models import QuestionsData
+from app.models import QuestionsData, UserQuestionStatus
 
 # 创建命名空间
 admin_questions_ns = api.namespace('Admin-Questions', description='题目管理接口', path='/api')
@@ -29,7 +29,9 @@ create_question_model = admin_questions_ns.model('CreateQuestion', {
         'constraints': fields.List(fields.String, example=['-1000 ≤ a, b ≤ 1000']),
         'examples': fields.List(fields.Nested(example_model))
     })),
-    'topic': fields.String(required=True, enum=TOPIC_ENUM, example='入门')
+    'topic': fields.String(required=True, enum=TOPIC_ENUM, example='入门'),
+    'submit_num': fields.Integer(example=100, description='总提交次数'),
+    'solve_num': fields.Integer(example=50, description='总解决次数'),
 })
 
 # 更新题目模型（所有字段可选）
@@ -54,7 +56,42 @@ class AdminQuestionList(Resource):
     @role_required('admin')
     def get(self):
         """获取所有题目列表（管理员）"""
-        return QuestionsData.query.all()
+        # 获取所有题目
+        questions = QuestionsData.query.all()
+        question_ids = [q.uid for q in questions]
+
+        # 批量获取统计信息（race_id=0, user_id=0）
+        stats_query = UserQuestionStatus.query.filter(
+            UserQuestionStatus.race_id == 0,
+            UserQuestionStatus.user_id == 0,
+            UserQuestionStatus.question_id.in_(question_ids)
+        ).all()
+
+        stats_dict = {s.question_id: {
+            "submit_num": s.submit or 0,
+            "solve_num": s.solve or 0
+        } for s in stats_query}
+
+        # 构建响应数据
+        result = []
+        for q in questions:
+            stats = stats_dict.get(q.uid, {
+                "submit_num": 0,
+                "solve_num": 0
+            })
+            submit_num = stats["submit_num"]
+            solve_num = stats["solve_num"]
+
+            question_data = {
+                "uid": q.uid,
+                "question": q.question,
+                "topic": q.topic,
+                "submit_num": submit_num,
+                "solve_num": solve_num,
+            }
+            result.append(question_data)
+
+        return result
 
     @admin_questions_ns.expect(create_question_model)
     @admin_questions_ns.response(400, '参数验证失败')

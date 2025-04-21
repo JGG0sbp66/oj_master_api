@@ -101,6 +101,9 @@ def get_user_info(user_id):
     return {
         "username": user.username,
         "email": user.email,
+        "questions_num": len(user.questions),
+        "races_num": len(user.race),
+        "create_time": user.create_time.strftime('%Y-%m-%d'),
     }
 
 

@@ -12,6 +12,7 @@ class User(db.Model):
     role = db.Column(db.String(20), default='user')
     questions = db.Column(db.JSON, nullable=True)
     race = db.Column(db.JSON, nullable=True)
+    create_time = db.Column(db.DateTime, default=datetime.now)
 
 
 class QuestionsData(db.Model):

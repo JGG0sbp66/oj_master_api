@@ -1,4 +1,6 @@
 # app/__init__.py
+import json
+
 from flask import Flask
 from flask_cors import CORS
 from flask_restx import Api
@@ -14,6 +16,15 @@ def create_app(config_class='config.Config'):
     app = Flask(__name__)
     app.config.from_object(config_class)
     celery.conf.update(app.config)
+
+    @api.representation('application/json')
+    def output_json(data, code, headers=None):
+        """确保JSON响应禁用ASCII转义并保留状态码"""
+        resp = app.make_response(json.dumps(data, ensure_ascii=False))
+        resp.status_code = code  # 关键修复：设置状态码
+        resp.headers.extend(headers or {})
+        resp.content_type = 'application/json; charset=utf-8'
+        return resp
 
     # 初始化Redis
     redis_wrapper.init_app(app)

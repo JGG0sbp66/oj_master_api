@@ -7,6 +7,8 @@ load_dotenv()
 
 
 class Config:
+    JSON_AS_ASCII = False
+    JSONIFY_PRETTYPRINT_REGULAR = True
     # 安全密钥配置
     SECRET_KEY = os.environ.get('SECRET_KEY') or os.urandom(24).hex()  # 优先从环境变量读取
     JWT_ALGORITHM = "HS256"

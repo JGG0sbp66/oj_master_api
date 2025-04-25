@@ -110,6 +110,8 @@ def get_race_list():
 def get_race_rank(race_id):
     query = RaceRank.query
     query = query.filter(RaceRank.contest_id == race_id)
+    # 添加排序条件：先按解题数量降序，再按罚时升序
+    query = query.order_by(RaceRank.total_solved.desc(), RaceRank.total_penalty.asc())
     result = query.all()
 
     race_rank_list = []

@@ -44,6 +44,7 @@ race_model = admin_ns.model('Race', {
         example=["user1", "user2", "user3"],
         description='报名用户UID数组'
     ),
+    'user_uid_list': fields.List(fields.Integer),
     'status': fields.String(description='比赛状态')
 })
 
@@ -192,9 +193,11 @@ class RaceDetail(Resource):
             "created_at": race.created_at,
             "updated_at": race.updated_at,
             "problems_list": race.problems_list,
-            "user_list": user_list_with_names,  # 使用转换后的用户名列表
+            "user_list": user_list_with_names,
+            "user_uid_list": race.user_list,
             "status": race.status
         }
+        print(race_data)
 
         return race_data
 

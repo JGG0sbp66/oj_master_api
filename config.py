@@ -31,7 +31,7 @@ class Config:
     }
 
     # 头像配置
-    AVATAR_UPLOAD_DIR = os.path.join(os.path.dirname(__file__), 'app', 'user_img', 'avatar')
+    AVATAR_UPLOAD_DIR = os.path.join(os.path.dirname(__file__), 'data', 'user_img', 'avatar')
     ALLOWED_AVATAR_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
     MAX_AVATAR_SIZE = 2 * 1024 * 1024  # 2MB
     DEFAULT_AVATAR = 'default.png'
@@ -52,5 +52,10 @@ class Config:
         "db": 0
     }
 
-    #deepseek api
+    # deepseek api
     deepseek_api_key = os.environ.get('DEEPSEEK_API_KEY')
+
+    # 上传测试用例配置
+    TESTCASE_UPLOAD_DIR = os.path.join(os.path.dirname(__file__), 'data', 'test_case', 'tmp')
+    ALLOWED_TESTCASE_EXTENSIONS = {'zip'}
+    MAX_TESTCASE_SIZE = 16 * 1024 * 1024  # 16MB

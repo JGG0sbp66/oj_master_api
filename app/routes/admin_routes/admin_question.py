@@ -1,7 +1,15 @@
-from flask_restx import Resource, fields
+import os
+import shutil
+
+from flask import current_app
+from werkzeug.datastructures import FileStorage
+from flask_restx import Resource, fields, reqparse
 from app import api, db
+from app.services.testcase_service import process_test_cases, move_test_cases
+from app.utils.file_utils import save_uploaded_file, extract_zip_file
 from app.utils.role_utils import role_required
 from app.models import QuestionsData, UserQuestionStatus
+from config import Config
 
 # 创建命名空间
 admin_questions_ns = api.namespace('Admin-Questions', description='题目管理接口', path='/api')
@@ -18,7 +26,6 @@ example_model = admin_questions_ns.model('Example', {
 
 # 创建题目输入模型（严格验证）
 create_question_model = admin_questions_ns.model('CreateQuestion', {
-    'uid': fields.Integer(required=True, example=1),
     'question': fields.Nested(admin_questions_ns.model('QuestionData', {
         'title': fields.String(required=True, min_length=1, example='两数之和'),
         'description': fields.String(required=True, min_length=1, example='计算两个整数的和'),
@@ -47,6 +54,12 @@ update_question_model = admin_questions_ns.model('UpdateQuestion', {
         'examples': fields.List(fields.Nested(example_model))
     })),
     'topic': fields.String(enum=TOPIC_ENUM)
+})
+
+# 上传测试用例模型
+testcase_upload_model = admin_questions_ns.model('TestcaseUpload', {
+    'problem_id': fields.Integer(required=True, description='题目ID'),
+    'testcase_file': fields.String(required=True, description='测试用例ZIP文件', example='testcases.zip')
 })
 
 
@@ -201,3 +214,84 @@ class AdminQuestionDetail(Resource):
         """获取题目详情"""
         question = QuestionsData.query.get_or_404(question_id)
         return question
+
+
+# 创建文件上传的解析器
+file_upload_parser = reqparse.RequestParser()
+file_upload_parser.add_argument(
+    'file',
+    type=FileStorage,
+    location='files',
+    required=True,
+    help='包含测试用例的ZIP文件'
+)
+
+
+@admin_questions_ns.route('/testcase-upload/<int:question_id>')
+class TestCaseUploadQuestion(Resource):
+    @admin_questions_ns.expect(testcase_upload_model)
+    @admin_questions_ns.response(400, '参数验证失败')
+    @role_required('admin')
+    def post(self, question_id):
+        """上传测试用例"""
+        try:
+            args = file_upload_parser.parse_args()
+            uploaded_file = args['file']
+
+            # 验证文件扩展名
+            if not ('.' in uploaded_file.filename and
+                    uploaded_file.filename.rsplit('.', 1)[1].lower() in Config.ALLOWED_TESTCASE_EXTENSIONS):
+                return {
+                    "success": False,
+                    "message": "文件格式有误，请上传zip格式压缩包"
+                }, 400
+
+            # 创建必要的目录
+            os.makedirs(Config.TESTCASE_UPLOAD_DIR + '/zip', exist_ok=True)
+            os.makedirs(Config.TESTCASE_UPLOAD_DIR + '/extracted', exist_ok=True)
+            os.makedirs(os.path.join(Config.TESTCASE_UPLOAD_DIR, '../problems'), exist_ok=True)
+
+            # 保存上传的文件
+            zip_path = save_uploaded_file(uploaded_file,
+                                          os.path.join(Config.TESTCASE_UPLOAD_DIR, 'zip'),
+                                          f"testcases_{question_id}")
+
+            # 解压ZIP文件
+            extract_dir = os.path.join(Config.TESTCASE_UPLOAD_DIR, 'extracted', f"testcases_{question_id}")
+            extracted_files = extract_zip_file(zip_path, extract_dir)
+
+            # 处理测试用例
+            result = process_test_cases(extract_dir)
+
+            if len(result.get('errors', [])) == 0:
+                # 正确的目标路径
+                target_dir = os.path.join(Config.TESTCASE_UPLOAD_DIR, '../problems', f"testcases_{question_id}")
+                move_test_cases(extract_dir, target_dir)
+
+                # 清理临时文件
+                shutil.rmtree(extract_dir)
+                os.remove(zip_path)
+            else:
+                return {
+                    "success": False,
+                    "message": "测试用例处理失败",
+                    "details": result['errors']
+                }, 400
+
+            return {
+                "success": True,
+                "message": "测试用例已成功上传并处理",
+                "details": {
+                    "question_id": question_id,
+                    "test_cases_count": result['count'],
+                    "processed_files": extracted_files
+                }
+            }
+
+        except Exception as e:
+            current_app.logger.error(f"测试用例上传失败: {str(e)}", exc_info=True)
+            return {
+                "success": False,
+                "message": "测试用例上传处理失败",
+                "error": str(e)
+            }, 500

@@ -15,6 +15,7 @@ secrets/
 
 # 日志
 *.log
+*.log.*
 
 # celerybeat
 celerybeat-schedule

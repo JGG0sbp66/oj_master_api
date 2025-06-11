@@ -2,7 +2,7 @@ from .race_service import update_race_rank
 from .. import db
 from ..models import UserQuestionStatus, QuestionsData, User
 import math
-from datetime import datetime
+from datetime import datetime as dt
 
 
 def get_question_status(user_id, question_id):
@@ -27,7 +27,7 @@ def get_questions(page, category, topic, textinput, user_id=None):
     offset = (page - 1) * limit
 
     # 基础查询
-    query = QuestionsData.query
+    query = QuestionsData.query.filter(QuestionsData.is_contest_question == 0)
 
     # 状态过滤逻辑（根据是否登录）
     if category in ['未尝试', '已通过', '未通过']:
@@ -144,7 +144,7 @@ def add_question_record(user_id, question_uid, is_passed):
         # 准备记录数据
         new_record = {
             "question_uid": question_uid,
-            "submit_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "submit_time": dt.now().strftime("%Y-%m-%d %H:%M:%S"),
             "is_passed": is_passed
         }
 
@@ -277,7 +277,9 @@ def judge_question(user_id, question_uid, race_id, result):
 
 
 def get_recent_questions(limit=5):
-    questions = QuestionsData.query.order_by(
+    questions = QuestionsData.query.filter(
+        QuestionsData.is_contest_question == 0
+    ).order_by(
         QuestionsData.updated_at.desc()
     ).limit(limit).all()
 

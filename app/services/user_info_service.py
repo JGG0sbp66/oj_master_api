@@ -105,6 +105,7 @@ def get_user_info(user_id):
         "questions_num": len(user.questions),
         "races_num": len(user.race),
         "create_time": user.create_time.strftime('%Y-%m-%d'),
+        "rating": user.rating,
     }
 
 

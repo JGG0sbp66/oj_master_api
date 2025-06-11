@@ -1,5 +1,3 @@
-from pygments.lexer import default
-
 from .extensions import db
 from datetime import datetime
 

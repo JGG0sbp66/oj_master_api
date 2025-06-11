@@ -288,3 +288,69 @@ def get_recent_questions(limit=5):
         'title': q.question.get('title', ''),
         'topic': q.topic
     } for q in questions]
+
+
+def admin_get_questions(page, topic, textinput):
+    """
+    管理员获取题目列表，支持分页和筛选
+    :param page: 页码
+    :param topic: 题目难度
+    :param textinput: 搜索关键词
+    """
+    limit = 8
+    offset = (page - 1) * limit
+
+    query = QuestionsData.query
+    # 难度筛选
+    if topic and topic != "all":
+        query = query.filter(QuestionsData.topic == topic)
+
+    # 文本搜索
+    if textinput:
+        query = query.filter(
+            db.func.json_extract(QuestionsData.question, '$.title').ilike(f"%{textinput}%")
+        )
+
+    # 获取分页结果
+    total_count = query.count()
+    questions = query.limit(limit).offset(offset).all()
+
+    question_ids = [q.uid for q in questions]
+
+    # 批量获取统计信息（race_id=0, user_id=0）
+    stats_query = UserQuestionStatus.query.filter(
+        UserQuestionStatus.race_id == 0,
+        UserQuestionStatus.user_id == 0,
+        UserQuestionStatus.question_id.in_(question_ids)
+    ).all()
+
+    stats_dict = {s.question_id: {
+        "submit_num": s.submit or 0,
+        "solve_num": s.solve or 0
+    } for s in stats_query}
+
+    # 构建响应数据
+    result = []
+    for q in questions:
+        stats = stats_dict.get(q.uid, {
+            "submit_num": 0,
+            "solve_num": 0
+        })
+        submit_num = stats["submit_num"]
+        solve_num = stats["solve_num"]
+
+        question_data = {
+            "uid": q.uid,
+            "question": q.question,
+            "topic": q.topic,
+            "submit_num": submit_num,
+            "solve_num": solve_num,
+            "updated_at": q.updated_at.strftime('%Y-%m-%d'),
+        }
+        result.append(question_data)
+
+    return {
+        "questions": result,
+        "total_page": math.ceil(total_count / limit),
+        "total_count": total_count
+    }

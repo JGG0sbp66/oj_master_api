@@ -1,3 +1,4 @@
+from app import redis_wrapper
 from app.models import User, QuestionsData, RaceData
 
 
@@ -16,5 +17,6 @@ def get_stats():
         "success": True,
         "注册用户数量": users_count,
         "题目数量": questions_count,
-        "竞赛数量": race_count
+        "竞赛数量": race_count,
+        "在线用户数": len(redis_wrapper.keys("online:*"))
     }

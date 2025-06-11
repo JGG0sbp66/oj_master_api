@@ -1,10 +1,11 @@
 import os
 import shutil
 
-from flask import current_app
+from flask import current_app, request
 from werkzeug.datastructures import FileStorage
 from flask_restx import Resource, fields, reqparse
 from app import api, db
+from app.services.questoin_service import admin_get_questions
 from app.services.testcase_service import process_test_cases, move_test_cases
 from app.utils.file_utils import save_uploaded_file, extract_zip_file
 from app.utils.role_utils import role_required
@@ -38,8 +39,16 @@ create_question_model = admin_questions_ns.model('CreateQuestion', {
         'examples': fields.List(fields.Nested(example_model))
     })),
     'topic': fields.String(required=True, enum=TOPIC_ENUM, example='入门'),
-    'submit_num': fields.Integer(example=100, description='总提交次数'),
-    'solve_num': fields.Integer(example=50, description='总解决次数'),
+    'submit_num': fields.Integer(example=0, description='总提交次数'),
+    'solve_num': fields.Integer(example=0, description='总解决次数'),
+    'updated_at': fields.String(description='最后更新时间', example='2023-10-01'),
+    'is_contest_question': fields.Integer(default=0, description='是否为比赛题目，0表示否，1表示是')
+})
+
+question_list_model = admin_questions_ns.model('QuestionList', {
+    'page': fields.Integer(description='页码', default=1),
+    'topic': fields.String(description='难度', default=''),
+    'input': fields.String(description='题目名', default='')
 })
 
 # 更新题目模型（所有字段可选）
@@ -62,6 +71,35 @@ testcase_upload_model = admin_questions_ns.model('TestcaseUpload', {
     'problem_id': fields.Integer(required=True, description='题目ID'),
     'testcase_file': fields.String(required=True, description='测试用例ZIP文件', example='testcases.zip')
 })
+
+
+@admin_questions_ns.route('/admin-get-questions')
+class AdminGetQuestions(Resource):
+    @admin_questions_ns.expect(question_list_model)
+    @role_required('admin')
+    def post(self):
+        """按照条件筛选"""
+        try:
+            data = request.get_json()
+
+            result = admin_get_questions(
+                page=int(data.get('page', 1)),
+                topic=str(data.get('topic', '')).strip(),
+                textinput=str(data.get('input', '')).strip()
+            )
+
+            return {
+                "success": True,
+                "questions": result.get('questions', []),
+                "total_page": result.get('total_page', 1),
+                "total_count": result.get('total_count', 0)
+            }
+
+        except ValueError:
+            return {
+                "success": False,
+                "message": "参数类型错误"
+            }, 400
 
 
 @admin_questions_ns.route('/admin-question')
@@ -102,6 +140,7 @@ class AdminQuestionList(Resource):
                 "topic": q.topic,
                 "submit_num": submit_num,
                 "solve_num": solve_num,
+                "updated_at": q.updated_at.strftime('%Y-%m-%d'),
             }
             result.append(question_data)
 
@@ -140,7 +179,8 @@ class AdminQuestionList(Resource):
                 'constraints': data['question'].get('constraints', []),
                 'examples': data['question'].get('examples', [])
             },
-            topic=data['topic']
+            topic=data['topic'],
+            is_contest_question=data.get('is_contest_question', 0),
         )
 
         db.session.add(new_question)

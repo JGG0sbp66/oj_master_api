@@ -11,8 +11,8 @@ questions_ns = api.namespace('Questions', description='问题相关接口', path
 question_list_model = questions_ns.model('QuestionList', {
     'page': fields.Integer(description='页码', default=1),
     'category': fields.String(description='分类', default=''),
-    'topic': fields.String(description='主题', default=''),
-    'input': fields.String(description='搜索输入', default='')
+    'topic': fields.String(description='难度', default=''),
+    'input': fields.String(description='题目名', default='')
 })
 
 question_detail_model = questions_ns.model('QuestionDetail', {

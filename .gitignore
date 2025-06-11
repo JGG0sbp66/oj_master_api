@@ -1,6 +1,6 @@
 # .gitignore
 # Python 相关
-.env
+data/.env
 *.pyc
 __pycache__/
 venv/

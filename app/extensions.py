@@ -1,11 +1,14 @@
-# extensions.py
-from flask_sqlalchemy import SQLAlchemy
+import os
 
+from flask_sqlalchemy import SQLAlchemy
+import redis
+from config import Config
+
+# 数据库扩展
 db = SQLAlchemy()
 
-import redis
 
-
+# Redis 扩展
 class RedisWrapper:
     def __init__(self, app=None):
         self.redis = None
@@ -18,8 +21,8 @@ class RedisWrapper:
                 host=app.config['REDIS_CONFIG']['host'],
                 port=app.config['REDIS_CONFIG']['port'],
                 db=app.config['REDIS_CONFIG']['db'],
-                max_connections=20,  # 连接池大小
-                decode_responses=True  # 自动解码
+                max_connections=20,
+                decode_responses=True
             )
         )
 
@@ -27,8 +30,11 @@ class RedisWrapper:
         return getattr(self.redis, name)
 
 
-# 创建扩展实例
 redis_wrapper = RedisWrapper()
+
+# Celery 扩展
 from celery import Celery
 
-celery = Celery(__name__, broker='redis://localhost:6379/0')
+celery = Celery(__name__, broker=Config.CELERY_BROKER_URL, backend=Config.CELERY_RESULT_BACKEND)
+celery.conf.update(
+    beat_schedule_filename=os.path.join(Config.CELERYBEAT_SCHEDULE_DIR, 'celerybeat-schedule'))

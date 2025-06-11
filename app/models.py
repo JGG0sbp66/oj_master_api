@@ -1,3 +1,5 @@
+from pygments.lexer import default
+
 from .extensions import db
 from datetime import datetime
 
@@ -9,9 +11,11 @@ class User(db.Model):
     username = db.Column(db.String(80), unique=True, nullable=False)
     password = db.Column(db.String(120), nullable=False)
     email = db.Column(db.String(120), nullable=False)
-    role = db.Column(db.String(20), default='user')
+    description = db.Column(db.Text, nullable=False, default='热爱编程，喜欢解决复杂问题。正在学习算法和数据结构')
+    role = db.Column(db.Enum('user', 'admin', 'superAdmin'), nullable=False, default='user')
     questions = db.Column(db.JSON, nullable=True)
     race = db.Column(db.JSON, nullable=True)
+    rating = db.Column(db.Integer, nullable=True, default=1500, comment='用户等级积分')
     create_time = db.Column(db.DateTime, default=datetime.now)
 
 
@@ -22,6 +26,7 @@ class QuestionsData(db.Model):
     question = db.Column(db.JSON, nullable=True)
     topic = db.Column(db.Enum('入门', '普及', '提高', '省选', 'NOI', 'CTSC', name='status_enum'))
     updated_at = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)
+    is_contest_question = db.Column(db.Boolean, default=False, nullable=False, comment='是否为比赛题目')
 
 
 class UserQuestionStatus(db.Model):

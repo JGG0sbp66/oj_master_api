@@ -1,5 +1,5 @@
 from celery.schedules import crontab
-from ..extensions import celery
+from app.extensions import celery
 from ..services.race_service import update_race_status
 
 

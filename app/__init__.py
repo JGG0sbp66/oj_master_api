@@ -1,5 +1,6 @@
 # app/__init__.py
 import json
+import os
 
 from flask import Flask
 from flask_cors import CORS
@@ -61,7 +62,7 @@ def create_app(config_class='config.Config'):
     api.add_namespace(questions_ns)
     api.add_namespace(race_ns)
     api.add_namespace(admin_ns)
-    api.add_namespace(questions_ns)
+    api.add_namespace(admin_questions_ns)
     api.add_namespace(user_info_ns)
     api.add_namespace(ai_ns)
     api.add_namespace(panel_ns)
@@ -69,11 +70,15 @@ def create_app(config_class='config.Config'):
     app.permanent_session_lifetime = app.config['PERMANENT_SESSION_LIFETIME']
 
     # 配置日志
-    handler = RotatingFileHandler('app.log', maxBytes=10000, backupCount=3, encoding='utf-8')
-    handler.setFormatter(logging.Formatter(
-        '[%(asctime)s] %(levelname)s in %(module)s: %(message)s'
-    ))
+    os.makedirs(app.config['LOG_DIR'], exist_ok=True)
+    handler = RotatingFileHandler(
+        app.config['LOG_FILE'],
+        maxBytes=app.config['LOG_MAX_BYTES'],
+        backupCount=app.config['LOG_BACKUP_COUNT'],
+        encoding='utf-8'
+    )
+    handler.setFormatter(logging.Formatter(app.config['LOG_FORMAT']))
     app.logger.addHandler(handler)
-    app.logger.setLevel(logging.INFO)
+    app.logger.setLevel(app.config['LOG_LEVEL'])
 
     return app

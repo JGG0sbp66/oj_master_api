@@ -2,7 +2,7 @@ from flask_restx import Resource, fields
 from flask import request, g
 from app import api  # 从主模块导入api实例
 from app.services.user_info_service import to_chance_password, to_change_username, to_change_email, get_user_info, \
-    get_username
+    get_username, to_change_description
 from app.services.user_info_service import get_avatar_service, save_avatar, get_user_questions, get_user_race
 from app.utils.role_utils import optional_login, role_required
 
@@ -27,6 +27,10 @@ username_change_model = api.model('UsernameChange', {
 email_change_model = api.model('EmailChange', {
     'new_email': fields.String(required=True, description='新邮箱'),
     'new_email_code': fields.String(required=True, description='新邮箱验证码')
+})
+
+description_change_model = api.model('DescriptionChange', {
+    'new_description': fields.String(required=True, description='新个人简介')
 })
 
 
@@ -227,6 +231,31 @@ class ChangeEmail(Resource):
             return {
                 "success": False,
                 "message": f"修改邮箱失败: {str(e)}"
+            }, 500
+
+
+@user_info_ns.route('/user-change-description')
+class ChangeDescription(Resource):
+    @user_info_ns.expect(description_change_model)
+    @optional_login
+    def post(self):
+        """修改个人简介"""
+        try:
+            user_id = getattr(g, 'current_user_id', None)
+            data = request.get_json()
+            new_description = data.get('new_description')
+
+            if user_id is None:
+                return {
+                    "success": False,
+                    "message": "无效的用户"
+                }, 401
+
+            return to_change_description(user_id, new_description)
+        except Exception as e:
+            return {
+                "success": False,
+                "message": f"修改个人简介失败: {str(e)}"
             }, 500
 
 

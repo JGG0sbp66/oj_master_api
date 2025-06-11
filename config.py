@@ -1,9 +1,11 @@
 # config.py
+import logging
 import os
 from datetime import timedelta
 from dotenv import load_dotenv
 
-load_dotenv()
+env_path = os.path.join(os.path.dirname(__file__), 'data', '.env')
+load_dotenv(dotenv_path=env_path)
 
 
 class Config:
@@ -59,3 +61,16 @@ class Config:
     TESTCASE_UPLOAD_DIR = os.path.join(os.path.dirname(__file__), 'data', 'test_case', 'tmp')
     ALLOWED_TESTCASE_EXTENSIONS = {'zip'}
     MAX_TESTCASE_SIZE = 16 * 1024 * 1024  # 16MB
+
+    # 日志配置
+    LOG_DIR = os.path.join(os.path.dirname(__file__), 'data', 'logs')
+    LOG_FILE = os.path.join(LOG_DIR, "app.log")
+    LOG_MAX_BYTES = 10000
+    LOG_BACKUP_COUNT = 3
+    LOG_LEVEL = logging.INFO
+    LOG_FORMAT = '[%(asctime)s] %(levelname)s in %(module)s: %(message)s'
+
+    # Celery 配置
+    CELERY_BROKER_URL = 'redis://localhost:6379/0'
+    CELERY_RESULT_BACKEND = 'redis://localhost:6379/1'
+    CELERYBEAT_SCHEDULE_DIR = os.path.join(os.path.dirname(__file__), 'data', 'celery')

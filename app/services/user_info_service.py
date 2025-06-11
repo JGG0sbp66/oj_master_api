@@ -101,6 +101,7 @@ def get_user_info(user_id):
     return {
         "username": user.username,
         "email": user.email,
+        "description": user.description,
         "questions_num": len(user.questions),
         "races_num": len(user.race),
         "create_time": user.create_time.strftime('%Y-%m-%d'),
@@ -454,6 +455,27 @@ def to_change_email(user_id, email, email_code):
     except Exception as e:
         db.session.rollback()
         return {"success": False, "message": f"邮箱修改失败: {str(e)}"}, 500
+
+
+def to_change_description(user_id, new_description):
+    """修改用户描述"""
+    # 1. 参数校验
+    if not user_id or not new_description:
+        return {"success": False, "message": "参数错误"}, 400
+
+    # 2. 用户存在性检查
+    user = User.query.get(user_id)
+    if not user:
+        return {"success": False, "message": "用户不存在"}, 404
+
+    # 3. 更新描述
+    try:
+        user.description = new_description
+        db.session.commit()
+        return {"success": True, "message": "个人简介修改成功"}
+    except Exception as e:
+        db.session.rollback()
+        return {"success": False, "message": f"个人简介修改失败: {str(e)}"}, 500
 
 
 def get_username(uid):

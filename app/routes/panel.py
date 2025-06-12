@@ -13,7 +13,7 @@ panel_ns = api.namespace('Panel', description='面板相关接口', path='/api')
 @panel_ns.route('/getStats')
 class GetStats(Resource):
     def get(self):
-        """获取注册人数，题目数，竞赛数"""
+        """获取注册人数，题目数，竞赛数，在线用户数"""
         try:
             return get_stats()
         except Exception as e:

@@ -5,7 +5,7 @@ from flask import current_app, request
 from werkzeug.datastructures import FileStorage
 from flask_restx import Resource, fields, reqparse
 from app import api, db
-from app.services.questoin_service import admin_get_questions
+from app.services.question_service import admin_get_questions
 from app.services.testcase_service import process_test_cases, move_test_cases
 from app.utils.file_utils import save_uploaded_file, extract_zip_file
 from app.utils.role_utils import role_required

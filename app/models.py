@@ -67,3 +67,11 @@ class RaceRank(db.Model):
     problem_stats = db.Column(db.JSON, nullable=False)
     total_solved = db.Column(db.Integer, nullable=False)
     total_penalty = db.Column(db.Integer, nullable=False)
+
+
+class UserHeatmap(db.Model):
+    __tablename__ = 'user_heatmap'
+
+    user_id = db.Column(db.Integer, primary_key=True, nullable=False)
+    activity_date = db.Column(db.DateTime, primary_key=True)
+    activity_score = db.Column(db.Integer, nullable=False)

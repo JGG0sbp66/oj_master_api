@@ -1,7 +1,7 @@
 from flask_restx import Resource, fields
 from flask import request, g
 from app import api
-from app.services.questoin_service import get_questions, get_question_detail, get_recent_questions
+from app.services.question_service import get_questions, get_question_detail, get_recent_questions
 from app.utils.role_utils import optional_login
 
 # 创建问题相关接口命名空间

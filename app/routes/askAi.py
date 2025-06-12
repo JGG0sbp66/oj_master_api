@@ -3,7 +3,7 @@ from flask import request, Response, stream_with_context, g
 from app import api  # 从主模块导入api实例
 from app.services.aiapi_service import generate_completion_stream, generate_completion, explain2, \
     judge_prompt, question_start, question_end
-from app.services.questoin_service import judge_question
+from app.services.question_service import judge_question
 from app.services.race_service import validate_race_access
 from app.utils.role_utils import optional_login
 from app.utils.validators import safe_int

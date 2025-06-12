@@ -1,3 +1,4 @@
+from .panel_service import update_user_heatmap
 from .race_service import update_race_rank
 from .. import db
 from ..models import UserQuestionStatus, QuestionsData, User
@@ -259,6 +260,7 @@ def judge_question(user_id, question_uid, race_id, result):
         is_passed = False
         if "答案正确" in result:
             is_passed = True
+            update_user_heatmap(user_id, dt.now().strftime("%Y-%m-%d"))
 
         add_question_record(user_id, question_uid, is_passed)
         update_user_question_status(user_id, question_uid, is_passed, race_id=race_id)

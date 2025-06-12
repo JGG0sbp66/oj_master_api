@@ -1,10 +1,11 @@
 import time
+from datetime import datetime
 
 from flask import g
-from flask_restx import Resource
+from flask_restx import Resource, fields
 
 from app import api, redis_wrapper
-from app.services.panel_service import get_stats
+from app.services.panel_service import get_stats, get_user_heatmap
 from app.utils.role_utils import optional_login
 
 panel_ns = api.namespace('Panel', description='面板相关接口', path='/api')
@@ -50,3 +51,43 @@ class Heartbeat(Resource):
                 "success": False,
                 "message": f"心跳检测失败: {str(e)}"
             }
+
+
+date_range_parser = api.parser()
+date_range_parser.add_argument('year', type=int, help='年份', default=datetime.now().year)
+
+heatmap_model = api.model('HeatmapData', {
+    'date': fields.String(description='日期'),
+    'score': fields.Integer(description='用户通过数量')
+})
+
+response_model = api.model('HeatmapResponse', {
+    'year': fields.Integer,
+    'user_id': fields.Integer,
+    'data': fields.List(fields.Nested(heatmap_model)),
+})
+
+
+@panel_ns.route('/getHeatmap')
+class GetHeatmap(Resource):
+    @panel_ns.expect(date_range_parser)
+    @panel_ns.marshal_with(response_model)
+    @optional_login
+    def get(self):
+        """获取用户热力图数据"""
+        args = date_range_parser.parse_args()
+        year = args.get('year', datetime.now().year)
+        user_id = getattr(g, 'current_user_id', None)
+
+        result = get_user_heatmap(user_id, year)
+
+        return {
+            "year": year,
+            "user_id": user_id,
+            "data": [
+                {
+                    "date": item.activity_date.strftime('%Y-%m-%d'),
+                    "score": item.activity_score
+                } for item in result
+            ]
+        }

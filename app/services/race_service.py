@@ -1,8 +1,14 @@
 import json
-from datetime import datetime
+import smtplib
+from datetime import datetime, timedelta
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+
+from flask import current_app as app
+from .turnstile_service import SMTP_CONFIG
 from .. import db
 from ..models import RaceData, QuestionsData, UserQuestionStatus, RaceRank, User
-from ..utils.validators import BusinessException
+from ..utils.validators import BusinessException, render_email_template
 
 
 def get_race_info(race_id, user_id=None):
@@ -211,31 +217,6 @@ def register_race(user_id, race_uid):
         raise BusinessException(f"数据库操作失败: {str(e)}", 500)
 
 
-def update_race_status():
-    """比赛状态更新"""
-    try:
-        now = datetime.now()
-
-        # 1. 更新进行中的比赛
-        RaceData.query.filter(
-            RaceData.start_time <= now,
-            RaceData.end_time > now,
-            RaceData.status != 'running'
-        ).update({'status': 'running'})
-
-        # 2. 更新已结束的比赛
-        RaceData.query.filter(
-            RaceData.end_time <= now,
-            RaceData.status != 'ended'
-        ).update({'status': 'ended'})
-
-        db.session.commit()
-        return True
-    except Exception as e:
-        db.session.rollback()
-        raise e
-
-
 def update_race_rank(user_id, question_uid, is_passed, race_id):
     """
     更新比赛排行榜
@@ -386,9 +367,6 @@ def update_race_rank(user_id, question_uid, is_passed, race_id):
         }
 
 
-from datetime import datetime
-
-
 def validate_race_access(user_id, race_id):
     """
     验证用户是否有权限使用该比赛的AI评判功能
@@ -418,3 +396,128 @@ def validate_race_access(user_id, race_id):
         return False, "未报名该比赛，无法提交", 403
 
     return True, None, None
+
+
+def update_race_status():
+    """比赛状态更新"""
+    try:
+        now = datetime.now()
+
+        # 1. 更新进行中的比赛
+        RaceData.query.filter(
+            RaceData.start_time <= now,
+            RaceData.end_time > now,
+            RaceData.status != 'running'
+        ).update({'status': 'running'})
+
+        # 2. 更新已结束的比赛
+        RaceData.query.filter(
+            RaceData.end_time <= now,
+            RaceData.status != 'ended'
+        ).update({'status': 'ended'})
+
+        db.session.commit()
+        return True
+    except Exception as e:
+        db.session.rollback()
+        raise e
+
+
+def get_start_race_list():
+    """获取即将开始的比赛列表"""
+    now = datetime.now()
+    reminder_minutes = 30
+    reminder_time = now + timedelta(minutes=reminder_minutes)
+    # 1. 获取30分钟后开始的比赛
+    upcoming_races = RaceData.query.filter(
+        RaceData.start_time > now,
+        RaceData.start_time <= reminder_time,
+        RaceData.status == 'upcoming'
+    ).all()
+
+    result_list = []
+
+    for race in upcoming_races:
+        race_dict = {
+            "title": race.title,
+            "start_time": race.start_time.strftime("%Y-%m-%d %H:%M:%S"),
+            "duration": race.duration,
+            "tags": [tag['name'] for tag in race.tags],
+            "user_list": race.user_list,
+        }
+        result_list.append(race_dict)
+
+    return result_list
+
+
+def send_race_email(to_email, title, start_time, duration, tags):
+    """发送比赛即将开始验证码邮件"""
+    sender = SMTP_CONFIG["user"]
+
+    try:
+        html_content = render_email_template("match_reminder.html", contest_name=title, start_time=start_time,
+                                             duration=duration, contest_type=tags)
+
+        msg = MIMEMultipart('alternative')
+        msg['From'] = sender
+        msg['To'] = to_email
+        msg['Subject'] = "比赛即将开始 - 请及时参赛"
+
+        msg.attach(MIMEText(html_content, 'html'))
+        msg.attach(MIMEText(f"您参加的比赛{title}即将在30分钟后开始，请及时参赛。", 'plain'))
+
+        with smtplib.SMTP_SSL(SMTP_CONFIG["host"], SMTP_CONFIG["port"]) as server:
+            server.login(sender, SMTP_CONFIG["password"])
+            server.sendmail(sender, [to_email], msg.as_string())
+
+        app.logger.info(f"邮件发送成功: {to_email}")
+        return True
+
+    except Exception as e:
+        app.logger.error(f"邮件发送失败到 {to_email}: {str(e)}")
+        return False
+
+
+def race_reminder():
+    """比赛提醒服务"""
+    try:
+        upcoming_races = get_start_race_list()
+        if not upcoming_races:
+            app.logger.info("没有即将开始的比赛")
+            return {
+                "success": False,
+                "message": "没有即将开始的比赛"
+            }
+
+        user_ids = [uid for race in upcoming_races for uid in race['user_list']]
+        users = {u.uid: u for u in User.query.filter(User.uid.in_(user_ids)).all()}
+
+        emails_to_send = []
+        for race in upcoming_races:
+            for user_id in race['user_list']:
+                if user := users.get(user_id):
+                    emails_to_send.append({
+                        "to_email": user.email,
+                        "title": race['title'],
+                        "start_time": race['start_time'],
+                        "duration": race['duration'],
+                        "tags": race['tags']
+                    })
+
+        success_count = 0
+        with smtplib.SMTP_SSL(SMTP_CONFIG["host"], SMTP_CONFIG["port"]) as server:
+            server.login(SMTP_CONFIG["user"], SMTP_CONFIG["password"])
+            for email_data in emails_to_send:
+                if send_race_email(**email_data):
+                    success_count += 1
+
+        app.logger.info(f"邮件发送完成: 成功{success_count}/总共{len(emails_to_send)}")
+        return {
+            "success": success_count == len(emails_to_send),
+            "total": len(emails_to_send),
+            "success_count": success_count
+        }
+
+    except Exception as e:
+        app.logger.error(f"提醒服务失败: {str(e)}", exc_info=True)
+        return False

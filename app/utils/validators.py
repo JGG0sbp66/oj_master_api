@@ -44,7 +44,7 @@ def render_email_template(template_name: str, **kwargs) -> str:
     :param kwargs: 模板变量
     :return: 渲染后的HTML字符串
     """
-    template_path = Path(__file__).parent / template_name
+    template_path = Path(__file__).parent / 'html' / template_name
     with open(template_path, "r", encoding="utf-8") as f:
         template = Template(f.read())
 

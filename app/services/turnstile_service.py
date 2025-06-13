@@ -43,7 +43,7 @@ SMTP_CONFIG = Config.SMTP_CONFIG
 
 
 # 发送邮件函数
-def send_verification_email(to_email: str, code: str) -> bool:
+def send_verification_email(to_email, code):
     """发送验证码邮件（使用模板）"""
     sender = SMTP_CONFIG["user"]
 

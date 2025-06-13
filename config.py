@@ -71,6 +71,6 @@ class Config:
     LOG_FORMAT = '[%(asctime)s] %(levelname)s in %(module)s: %(message)s'
 
     # Celery 配置
-    CELERY_BROKER_URL = 'redis://localhost:6379/0'
-    CELERY_RESULT_BACKEND = 'redis://localhost:6379/1'
-    CELERYBEAT_SCHEDULE_DIR = os.path.join(os.path.dirname(__file__), 'data', 'celery')
+    broker_url = 'redis://localhost:6379/0'
+    result_backend = 'redis://localhost:6379/1'
+    beat_schedule_dir = os.path.join(os.path.dirname(__file__), 'data', 'celery')

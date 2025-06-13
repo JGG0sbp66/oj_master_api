@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
+
+        body {
+            font-family: 'Inter', 'Helvetica Neue', sans-serif;
+            line-height: 1.6;
+            color: #2d3436;
+            background-color: #f8f9fa;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 40px auto;
+            padding: 40px;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .header {
+            font-size: 28px;
+            font-weight: 700;
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 35px;
+            position: relative;
+        }
+
+        .header::after {
+            content: "";
+            display: block;
+            width: 50px;
+            height: 3px;
+            background: #4a90e2;
+            margin: 15px auto;
+            border-radius: 2px;
+        }
+
+        .contest-info {
+            margin: 30px 0;
+            padding: 20px;
+            background: #f8f9ff;
+            border-radius: 12px;
+            border-left: 4px solid #4a90e2;
+        }
+
+        .contest-info h2 {
+            margin-top: 0;
+            color: #2c3e50;
+        }
+
+        .info-item {
+            display: flex;
+            margin-bottom: 10px;
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: #636e72;
+            min-width: 100px;
+        }
+
+        .info-value {
+            color: #2c3e50;
+        }
+
+        .code-container {
+            margin: 30px auto;
+            text-align: center;
+        }
+
+        .code {
+            letter-spacing: 5px;
+            font-size: 42px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #6c5ce7, #4a90e2);
+            color: white;
+            padding: 20px 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(106, 90, 205, 0.2);
+            cursor: pointer;
+            user-select: all;
+            -webkit-user-select: all;
+            -moz-user-select: all;
+            -ms-user-select: all;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .code:hover {
+            transform: scale(1.02);
+            box-shadow: 0 6px 25px rgba(106, 90, 205, 0.3);
+        }
+
+        .code:active {
+            transform: scale(0.98);
+        }
+
+        .footer {
+            margin-top: 40px;
+            padding-top: 25px;
+            border-top: 1px solid #eee;
+            color: #7f8c8d;
+            font-size: 12px;
+            text-align: center;
+        }
+
+        .end {
+            text-align: right;
+        }
+
+        @media (max-width: 640px) {
+            .container {
+                padding: 25px;
+                margin: 20px;
+            }
+
+            .header {
+                font-size: 24px;
+            }
+
+            .contest-info {
+                padding: 15px;
+            }
+
+            .info-item {
+                flex-direction: column;
+            }
+
+            .info-label {
+                margin-bottom: 5px;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">OJ_Master 比赛即将开始</div>
+
+    <p>您报名的比赛即将开始，请做好准备！</p>
+
+    <div class="contest-info">
+        <h2>${contest_name}</h2>
+        <div class="info-item">
+            <div class="info-label">开始时间：</div>
+            <div class="info-value">${start_time}</div>
+        </div>
+        <div class="info-item">
+            <div class="info-label">比赛时长：</div>
+            <div class="info-value">${duration}</div>
+        </div>
+        <div class="info-item">
+            <div class="info-label">比赛类型：</div>
+            <div class="info-value">${contest_type}</div>
+        </div>
+    </div>
+
+    <div class="code-container">
+        <a style="display: block;text-decoration: none;" class="code" href="https://www.oj-master.fun/nav/competition">点击前往比赛页面</a>
+        <div class="copy-hint"></div>
+    </div>
+
+    <div class="end">
+        <p>比赛将在 <strong style="color:#e67e22;">30分钟</strong> 后开始，请提前做好准备</p>
+        <p>如非本人操作，请忽略此邮件</p>
+    </div>
+
+    <div class="footer">
+        <p>系统自动发送，请勿直接回复</p>
+        <p>© 2025 OJ_Master 所谓混学团队</p>
+    </div>
+</div>
+</body>
+</html>

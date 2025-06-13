@@ -35,6 +35,12 @@ redis_wrapper = RedisWrapper()
 # Celery 扩展
 from celery import Celery
 
-celery = Celery(__name__, broker=Config.CELERY_BROKER_URL, backend=Config.CELERY_RESULT_BACKEND)
+celery = Celery(
+    __name__,
+    broker=Config.broker_url,
+    backend=Config.result_backend
+)
 celery.conf.update(
-    beat_schedule_filename=os.path.join(Config.CELERYBEAT_SCHEDULE_DIR, 'celerybeat-schedule'))
+    beat_schedule_filename=os.path.join(Config.beat_schedule_dir, 'celerybeat-schedule'),
+    imports=['app.utils.race_task'],
+)

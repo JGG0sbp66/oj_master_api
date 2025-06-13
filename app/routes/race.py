@@ -1,7 +1,8 @@
 from flask_restx import Resource, fields
 from flask import request, g
 from app import api, db
-from app.services.race_service import get_race_info, get_race_list, get_race_rank, register_race
+from app.services.race_service import get_race_info, get_race_list, get_race_rank, register_race, get_start_race_list
+from app.utils.race_task import race_reminder_task, check_race_status
 from app.utils.role_utils import optional_login
 from app.utils.validators import BusinessException
 
@@ -97,3 +98,12 @@ class RaceRegister(Resource):
         except Exception as e:
             db.session.rollback()
             return {"success": False, "message": f"报名过程中发生错误: {str(e)}"}, 500
+
+
+@race_ns.route('/test-send-race-email')
+class GetTmpRace(Resource):
+    def get(self):
+        """发送比赛提醒邮件（测试用）"""
+        result = race_reminder_task.delay()
+        # result = check_race_status.delay()
+        return result.get()

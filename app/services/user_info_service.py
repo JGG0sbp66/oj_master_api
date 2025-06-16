@@ -492,3 +492,111 @@ def get_username(uid):
 
     # 3. 返回用户名
     return {"success": True, "message": user.username}
+
+
+def get_user_list_service(uid=None, username=None, rating=None, page=1, per_page=5):
+    query = User.query
+
+    # 过滤条件
+    if uid:
+        query = query.filter(User.id == uid)
+    if username:
+        query = query.filter(User.username.like(f'%{username}%'))  # 模糊搜索
+    if rating:
+        query = query.filter(User.rating >= rating)
+
+    # 分页
+    paginated_users = query.paginate(page=page, per_page=per_page)
+
+    # 正确处理用户列表
+    users = [{
+        'uid': user.uid,
+        'username': user.username,
+        'email': user.email,
+        'description': user.description,
+        'role': user.role,
+        'questions': user.questions,
+        'race': user.race,
+        'rating': user.rating,
+        'create_time': user.create_time.strftime('%Y-%m-%d %H:%M:%S') if user.create_time else None,
+        'is_banned': user.is_banned,
+        'ban_reason': user.ban_reason,
+        'ban_start_time': user.ban_start_time.strftime('%Y-%m-%d %H:%M:%S') if user.ban_start_time else None,
+        'ban_end_time': user.ban_end_time.strftime('%Y-%m-%d %H:%M:%S') if user.ban_end_time else None
+    } for user in paginated_users.items]  # 这里遍历paginated_users.items
+
+    return {
+        "success": True,
+        "data": {
+            "users": users,
+            "total_pages": paginated_users.pages,
+            "current_page": page,
+            "total_items": paginated_users.total  # 添加总记录数
+        }
+    }
+
+
+def ban_user(uid, ban_reason, ban_end_time=None):
+    """封禁用户"""
+    # 1. 参数校验
+    if not uid or not ban_reason:
+        return {"success": False, "message": "参数错误"}, 400
+
+    # 2. 用户存在性检查
+    user = User.query.get(uid)
+    if not user:
+        return {"success": False, "message": "用户不存在"}, 404
+
+    # 3. 更新封禁信息
+    try:
+        user.is_banned = True
+        user.ban_reason = ban_reason
+        user.ban_start_time = db.func.now()  # 设置封禁开始时间为当前时间
+        user.ban_end_time = ban_end_time  # 可以为None表示永久封禁
+        db.session.commit()
+        return {"success": True, "message": "用户已被封禁"}
+    except Exception as e:
+        db.session.rollback()
+        return {"success": False, "message": f"封禁用户失败: {str(e)}"}, 500
+
+
+def unban_user(uid):
+    """解封用户"""
+    # 1. 参数校验
+    if not uid:
+        return {"success": False, "message": "参数错误"}, 400
+
+    # 2. 用户存在性检查
+    user = User.query.get(uid)
+    if not user:
+        return {"success": False, "message": "用户不存在"}, 404
+
+    # 3. 更新解封信息
+    try:
+        user.is_banned = False
+        db.session.commit()
+        return {"success": True, "message": "用户已被解封"}
+    except Exception as e:
+        db.session.rollback()
+        return {"success": False, "message": f"解封用户失败: {str(e)}"}, 500
+
+
+def update_user_role_service(uid, new_role):
+    """更新用户角色"""
+    # 1. 参数校验
+    if not uid or not new_role:
+        return {"success": False, "message": "参数错误"}, 400
+
+    # 2. 用户存在性检查
+    user = User.query.get(uid)
+    if not user:
+        return {"success": False, "message": "用户不存在"}, 404
+
+    # 3. 更新角色
+    try:
+        user.role = new_role
+        db.session.commit()
+        return {"success": True, "message": "用户角色已更新"}
+    except Exception as e:
+        db.session.rollback()
+        return {"success": False, "message": f"更新用户角色失败: {str(e)}"}, 500

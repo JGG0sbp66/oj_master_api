@@ -76,7 +76,7 @@ testcase_upload_model = admin_questions_ns.model('TestcaseUpload', {
 @admin_questions_ns.route('/admin-get-questions')
 class AdminGetQuestions(Resource):
     @admin_questions_ns.expect(question_list_model)
-    @role_required('admin')
+    @role_required('admin', 'superAdmin')
     def post(self):
         """按照条件筛选"""
         try:
@@ -105,7 +105,7 @@ class AdminGetQuestions(Resource):
 @admin_questions_ns.route('/admin-question')
 class AdminQuestionList(Resource):
     @admin_questions_ns.marshal_list_with(create_question_model)
-    @role_required('admin')
+    @role_required('admin', 'superAdmin')
     def get(self):
         """获取所有题目列表（管理员）"""
         # 获取所有题目
@@ -149,7 +149,7 @@ class AdminQuestionList(Resource):
     @admin_questions_ns.expect(create_question_model)
     @admin_questions_ns.response(400, '参数验证失败')
     @admin_questions_ns.response(201, '创建成功')
-    @role_required('admin')
+    @role_required('admin', 'superAdmin')
     def post(self):
         """创建新题目（严格验证）"""
         data = api.payload
@@ -195,7 +195,7 @@ class AdminQuestionList(Resource):
 @admin_questions_ns.route('/admin-question/<int:question_id>')
 class AdminQuestionDetail(Resource):
     @admin_questions_ns.response(404, '题目不存在')
-    @role_required('admin')
+    @role_required('admin', 'superAdmin')
     def delete(self, question_id):
         """删除题目"""
         question = QuestionsData.query.get(question_id)
@@ -209,7 +209,7 @@ class AdminQuestionDetail(Resource):
     @admin_questions_ns.expect(update_question_model)
     @admin_questions_ns.response(400, '参数验证失败')
     @admin_questions_ns.response(404, '题目不存在')
-    @role_required('admin')
+    @role_required('admin', 'superAdmin')
     def put(self, question_id):
         """更新题目信息"""
         question = QuestionsData.query.get(question_id)
@@ -250,7 +250,7 @@ class AdminQuestionDetail(Resource):
 
     @admin_questions_ns.marshal_with(create_question_model)
     @admin_questions_ns.response(404, '题目不存在')
-    @role_required('admin')
+    @role_required('admin', 'superAdmin')
     def get(self, question_id):
         """获取题目详情"""
         question = QuestionsData.query.get_or_404(question_id)
@@ -272,7 +272,7 @@ file_upload_parser.add_argument(
 class TestCaseUploadQuestion(Resource):
     @admin_questions_ns.expect(testcase_upload_model)
     @admin_questions_ns.response(400, '参数验证失败')
-    @role_required('admin')
+    @role_required('admin', 'superAdmin')
     def post(self, question_id):
         """上传测试用例"""
         try:

@@ -262,7 +262,7 @@ class ChangeDescription(Resource):
 @user_info_ns.route('/get-username/<int:user_id>')
 class GetUsername(Resource):
     @user_info_ns.doc(description='获取用户名')
-    @role_required('admin')
+    @role_required('admin', 'superAdmin')
     def get(self, user_id):
         """获取用户名"""
         try:

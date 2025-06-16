@@ -29,7 +29,8 @@ class Config:
     # 角色权限定义
     ROLES = {
         'user': 1,
-        'admin': 2
+        'admin': 2,
+        'superAdmin': 3,
     }
 
     # 头像配置

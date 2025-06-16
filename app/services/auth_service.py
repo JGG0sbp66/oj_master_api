@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import timedelta, datetime
 import bcrypt
 import requests
 from flask import make_response
@@ -86,9 +86,30 @@ def login_user(username, password):
     if not user:
         return {'success': False, 'message': '用户名或密码错误'}, 401
 
+    # 检查用户是否被封禁
+    if user.is_banned:
+        # 检查是否是临时封禁
+        if user.ban_end_time and user.ban_end_time > datetime.now():
+            return {
+                'success': False,
+                'message': f'账号已被封禁，原因: {user.ban_reason}。封禁截止时间: {user.ban_end_time.strftime("%Y-%m-%d %H:%M:%S")}'
+            }, 403
+        # 永久封禁
+        elif user.ban_end_time is None:
+            return {
+                'success': False,
+                'message': f'账号已被永久封禁，原因: {user.ban_reason}'
+            }, 403
+        # 封禁已过期但标记未清除的情况
+        else:
+            # 可以在这里自动解除封禁状态
+            user.is_banned = False
+            db.session.commit()
+
     try:
         if bcrypt.checkpw(password.encode('utf-8'), user.password.encode('utf-8')):
-            token = generate_token(user.uid, user.username, user.role)  # 生成Token
+            # 封禁检查通过后才生成token
+            token = generate_token(user.uid, user.username, user.role)
 
             response_data = {
                 'success': True,
@@ -97,22 +118,20 @@ def login_user(username, password):
                     'uid': user.uid,
                     'username': user.username,
                     'role': user.role,
-                    'auth_token': token
+                    'auth_token': token,
+                    'is_banned': False  # 明确返回封禁状态
                 }
             }
 
-            # 创建响应对象
             response = make_response(response_data)
-
-            # 设置JWT Cookie
             response.set_cookie(
                 'auth_token',
-                value=token,  # Cookie值为JWT Token
-                max_age=int(timedelta(days=7).total_seconds()),  # 设置过期时间
-                path='/',  # Cookie生效路径（/表示全站可用）
-                secure=False,  # 是否仅通过HTTPS传输，生产环境改为True
-                httponly=True,  # 禁止JavaScript访问（防XSS）
-                samesite='Lax'  # 限制第三方网站携带Cookie（防CSRF）
+                value=token,
+                max_age=int(timedelta(days=7).total_seconds()),
+                path='/',
+                secure=False,
+                httponly=True,
+                samesite='Lax'
             )
             return response
         else:

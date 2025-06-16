@@ -299,7 +299,7 @@ def admin_get_questions(page, topic, textinput):
     :param topic: 题目难度
     :param textinput: 搜索关键词
     """
-    limit = 8
+    limit = 7
     offset = (page - 1) * limit
 
     query = QuestionsData.query

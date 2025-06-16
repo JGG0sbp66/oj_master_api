@@ -15,6 +15,10 @@ class User(db.Model):
     race = db.Column(db.JSON, nullable=True)
     rating = db.Column(db.Integer, nullable=True, default=1500, comment='用户等级积分')
     create_time = db.Column(db.DateTime, default=datetime.now)
+    is_banned = db.Column(db.Boolean, default=False, nullable=False, comment='是否被封禁')
+    ban_reason = db.Column(db.String(255), nullable=True, comment='封禁原因')
+    ban_start_time = db.Column(db.DateTime, nullable=True, comment='封禁开始时间')
+    ban_end_time = db.Column(db.DateTime, nullable=True, comment='封禁结束时间(为空表示永久封禁)')
 
 
 class QuestionsData(db.Model):

@@ -108,7 +108,7 @@ update_race_input_model = admin_ns.model('RaceUpdate', {
 @admin_ns.route('/races')
 class RaceList(Resource):
     @admin_ns.doc(security='Bearer')
-    @role_required('admin')
+    @role_required('admin', 'superAdmin')
     @admin_ns.marshal_list_with(race_model)
     def get(self):
         """获取所有比赛列表"""
@@ -116,7 +116,7 @@ class RaceList(Resource):
         return races
 
     @admin_ns.doc(security='Bearer')
-    @role_required('admin')
+    @role_required('admin', 'superAdmin')
     @admin_ns.expect(create_race_input_model)
     def post(self):
         """创建新比赛"""
@@ -165,7 +165,7 @@ class RaceList(Resource):
 @admin_ns.route('/races/<int:race_id>')
 class RaceDetail(Resource):
     @admin_ns.doc(security='Bearer')
-    @role_required('admin')
+    @role_required('admin', 'superAdmin')
     @admin_ns.marshal_with(race_model)
     def get(self, race_id):
         """获取单个比赛详情"""
@@ -202,7 +202,7 @@ class RaceDetail(Resource):
         return race_data
 
     @admin_ns.doc(security='Bearer')
-    @role_required('admin')
+    @role_required('admin', 'superAdmin')
     @admin_ns.expect(update_race_input_model)
     def put(self, race_id):
         """更新比赛信息"""
@@ -248,7 +248,7 @@ class RaceDetail(Resource):
         return {"success": True, "message": "修改比赛成功"}, 201
 
     @admin_ns.doc(security='Bearer')
-    @role_required('admin')
+    @role_required('admin', 'superAdmin')
     def delete(self, race_id):
         """删除比赛"""
         try:

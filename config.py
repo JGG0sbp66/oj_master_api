@@ -75,3 +75,6 @@ class Config:
     broker_url = 'redis://localhost:6379/0'
     result_backend = 'redis://localhost:6379/1'
     beat_schedule_dir = os.path.join(os.path.dirname(__file__), 'data', 'celery')
+
+    # 测试用例配置
+    TESTCASE_DIR = os.path.join(os.path.dirname(__file__), 'data', 'test_case', 'problems')

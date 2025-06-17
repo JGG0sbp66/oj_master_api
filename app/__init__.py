@@ -58,6 +58,7 @@ def create_app(config_class='config.Config'):
     from .routes.askAi import ai_ns
     from .routes.panel import panel_ns
     from .routes.admin_routes.admin_userManage import admin_userManage
+    from .routes.judge import judge_ns
 
     api.add_namespace(auth_ns)
     api.add_namespace(questions_ns)
@@ -68,6 +69,7 @@ def create_app(config_class='config.Config'):
     api.add_namespace(ai_ns)
     api.add_namespace(panel_ns)
     api.add_namespace(admin_userManage)
+    api.add_namespace(judge_ns)
 
     app.permanent_session_lifetime = app.config['PERMANENT_SESSION_LIFETIME']
 

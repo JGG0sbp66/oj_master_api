@@ -494,7 +494,7 @@ def get_username(uid):
     return {"success": True, "message": user.username}
 
 
-def get_user_list_service(uid=None, username=None, rating=None, page=1, per_page=5):
+def get_user_list_service(uid=None, username=None, rating=None, page=1, per_page=8):
     query = User.query
 
     # 过滤条件

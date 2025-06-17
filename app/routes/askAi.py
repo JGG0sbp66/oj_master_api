@@ -71,7 +71,7 @@ class AIJudge(Resource):
             # 获取请求参数
             prompt = request.form.get('prompt')
             question = request.form.get('question')
-            user_id = getattr(g, 'current_user_id')
+            user_id = getattr(g, 'current_user_id', None)
             question_uid = request.form.get('question_uid')
             race_id = safe_int(request.form.get('race_uid'), 0)
 

@@ -3,7 +3,7 @@ from flask_restx import Resource, Model, fields, Namespace
 from app.services.user_info_service import get_user_list_service, ban_user, unban_user, update_user_role_service
 from app.utils.role_utils import role_required
 
-admin_userManage = Namespace('Admin-UserManage', description='管理员用户管理相关接口', prefix='/api')
+admin_userManage = Namespace('Admin-UserManage', description='管理员用户管理相关接口', path='/api')
 
 # 定义POST请求的请求体模型
 user_list_params = admin_userManage.model("UserListParams", {

@@ -126,7 +126,7 @@ def _run_test_case(command, input_file, output_file, time_limit, memory_limit):
                         'case_id': os.path.basename(input_file)[:-3]
                     }
 
-            if execution_time > time_limit * 1000:  # 比较毫秒
+            if execution_time > time_limit :  # 比较毫秒
                 return {
                     'status': 'Time Limit Exceeded',
                     'execution_time': execution_time,
@@ -166,7 +166,7 @@ def _run_test_case(command, input_file, output_file, time_limit, memory_limit):
             monitor_thread.join(timeout=0.1)
             return {
                 'status': 'Time Limit Exceeded',
-                'execution_time': time_limit * 1000,
+                'execution_time': time_limit,
                 'memory_used': max_memory / (1024 * 1024),  # MB
                 'case_id': os.path.basename(input_file)[:-3]
             }

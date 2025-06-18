@@ -121,7 +121,8 @@ def get_question_detail(question_id):
         "description": question_json.get("description"),
         "pattern_text": question_json.get("input_format"),
         "print_text": question_json.get("output_format"),
-        "examples": question_json.get("examples", [])
+        "examples": question_json.get("examples", []),
+        "constraints": question_json.get("constraints", []),
     }
 
 

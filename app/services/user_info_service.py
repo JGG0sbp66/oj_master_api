@@ -11,6 +11,7 @@ from app.utils.validators import is_safe_filename
 from config import Config
 import os
 
+from datetime import datetime
 
 # def get_avatar_service(user_id):
 #     """支持多格式的头像获取服务"""
@@ -494,14 +495,56 @@ def get_username(uid):
     return {"success": True, "message": user.username}
 
 
+# def get_user_list_service(uid=None, username=None, rating=None, page=1, per_page=5):
+#     query = User.query
+#
+#     # 过滤条件
+#     if uid:
+#         query = query.filter(User.id == uid)
+#     if username:
+#         query = query.filter(User.username.like(f'%{username}%'))  # 模糊搜索
+#     if rating:
+#         query = query.filter(User.rating >= rating)
+#
+#     # 分页
+#     paginated_users = query.paginate(page=page, per_page=per_page)
+#
+#     # 正确处理用户列表
+#     users = [{
+#         'uid': user.uid,
+#         'username': user.username,
+#         'email': user.email,
+#         'description': user.description,
+#         'role': user.role,
+#         'questions': user.questions,
+#         'race': user.race,
+#         'rating': user.rating,
+#         'create_time': user.create_time.strftime('%Y-%m-%d %H:%M:%S') if user.create_time else None,
+#         'is_banned': user.is_banned,
+#         'ban_reason': user.ban_reason,
+#         'ban_start_time': user.ban_start_time.strftime('%Y-%m-%d %H:%M:%S') if user.ban_start_time else None,
+#         'ban_end_time': user.ban_end_time.strftime('%Y-%m-%d %H:%M:%S') if user.ban_end_time else None
+#     } for user in paginated_users.items]  # 这里遍历paginated_users.items
+#
+#     return {
+#         "success": True,
+#         "data": {
+#             "users": users,
+#             "total_pages": paginated_users.pages,
+#             "current_page": page,
+#             "total_items": paginated_users.total  # 添加总记录数
+#         }
+#     }
+
+#   这里修复了一些strftime方法的错误
 def get_user_list_service(uid=None, username=None, rating=None, page=1, per_page=8):
     query = User.query
 
     # 过滤条件
     if uid:
-        query = query.filter(User.id == uid)
+        query = query.filter(User.uid == uid)
     if username:
-        query = query.filter(User.username.like(f'%{username}%'))  # 模糊搜索
+        query = query.filter(User.username.like(f'%{username}%'))
     if rating:
         query = query.filter(User.rating >= rating)
 
@@ -509,21 +552,62 @@ def get_user_list_service(uid=None, username=None, rating=None, page=1, per_page
     paginated_users = query.paginate(page=page, per_page=per_page)
 
     # 正确处理用户列表
-    users = [{
-        'uid': user.uid,
-        'username': user.username,
-        'email': user.email,
-        'description': user.description,
-        'role': user.role,
-        'questions': user.questions,
-        'race': user.race,
-        'rating': user.rating,
-        'create_time': user.create_time.strftime('%Y-%m-%d %H:%M:%S') if user.create_time else None,
-        'is_banned': user.is_banned,
-        'ban_reason': user.ban_reason,
-        'ban_start_time': user.ban_start_time.strftime('%Y-%m-%d %H:%M:%S') if user.ban_start_time else None,
-        'ban_end_time': user.ban_end_time.strftime('%Y-%m-%d %H:%M:%S') if user.ban_end_time else None
-    } for user in paginated_users.items]  # 这里遍历paginated_users.items
+    users = []
+    for user in paginated_users.items:
+        user_data = {
+            'uid': user.uid,
+            'username': user.username,
+            'email': user.email,
+            'description': user.description,
+            'role': user.role,
+            'questions': user.questions,
+            'race': user.race,
+            'rating': user.rating,
+            'is_banned': user.is_banned,
+            'ban_reason': user.ban_reason,
+        }
+
+        # 安全处理 create_time
+        if user.create_time:
+            if isinstance(user.create_time, datetime):
+                user_data['create_time'] = user.create_time.strftime('%Y-%m-%d %H:%M:%S')
+            else:
+                try:
+                    # 尝试解析字符串为 datetime 对象
+                    dt = datetime.fromisoformat(str(user.create_time))
+                    user_data['create_time'] = dt.strftime('%Y-%m-%d %H:%M:%S')
+                except (ValueError, TypeError):
+                    user_data['create_time'] = str(user.create_time)
+        else:
+            user_data['create_time'] = None
+
+        # 同样方式处理 ban_start_time
+        if user.ban_start_time:
+            if isinstance(user.ban_start_time, datetime):
+                user_data['ban_start_time'] = user.ban_start_time.strftime('%Y-%m-%d %H:%M:%S')
+            else:
+                try:
+                    dt = datetime.fromisoformat(str(user.ban_start_time))
+                    user_data['ban_start_time'] = dt.strftime('%Y-%m-%d %H:%M:%S')
+                except (ValueError, TypeError):
+                    user_data['ban_start_time'] = str(user.ban_start_time)
+        else:
+            user_data['ban_start_time'] = None
+
+        # 同样方式处理 ban_end_time
+        if user.ban_end_time:
+            if isinstance(user.ban_end_time, datetime):
+                user_data['ban_end_time'] = user.ban_end_time.strftime('%Y-%m-%d %H:%M:%S')
+            else:
+                try:
+                    dt = datetime.fromisoformat(str(user.ban_end_time))
+                    user_data['ban_end_time'] = dt.strftime('%Y-%m-%d %H:%M:%S')
+                except (ValueError, TypeError):
+                    user_data['ban_end_time'] = str(user.ban_end_time)
+        else:
+            user_data['ban_end_time'] = None
+
+        users.append(user_data)
 
     return {
         "success": True,
@@ -531,7 +615,7 @@ def get_user_list_service(uid=None, username=None, rating=None, page=1, per_page
             "users": users,
             "total_pages": paginated_users.pages,
             "current_page": page,
-            "total_items": paginated_users.total  # 添加总记录数
+            "total_items": paginated_users.total
         }
     }
 
